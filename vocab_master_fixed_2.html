@@ -1,0 +1,2953 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Vocab Master: 통합 Edition</title>
+  <style>
+    :root{
+      --bg:#0f1115; --card:#171a21; --text:#f2f3f5; --muted:#a7adbb;
+      --border:rgba(255,255,255,.14); --btn:#222635; --accent:#7aa2ff;
+      --correct:#2e7d32; --wrong:#c62828; --progress:#4caf50; --gold:#ffd700;
+    }
+    body.light-mode {
+      --bg:#f0f2f5; --card:#ffffff; --text:#1a1a2e; --muted:#666888;
+      --border:rgba(0,0,0,.15); --btn:#e8eaf0; --accent:#4a6fd4;
+      --correct:#2e7d32; --wrong:#c62828; --progress:#388e3c; --gold:#c8960c;
+    }
+    *{ box-sizing:border-box; font-family: 'Pretendard', system-ui, sans-serif; }
+    body{ margin:0; background:var(--bg); color:var(--text); display:flex; justify-content:center; align-items:center; min-height:100vh; padding:15px; transition:background 0.3s,color 0.3s; }
+    .wrap{ width:100%; max-width:500px; }
+    .card{ background:var(--card); border:1px solid var(--border); border-radius:24px; padding:20px; box-shadow:0 20px 50px rgba(0,0,0,0.5); text-align:center; position:relative; }
+
+    .header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; gap:8px; }
+    .set-selector{ background:var(--btn); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:8px; font-size:14px; cursor:pointer; outline:none; flex-grow:1; font-weight:bold; }
+    .best-score{ font-size:11px; padding:4px 8px; border-radius:6px; background:rgba(122,162,255,0.1); color:var(--accent); border:1px solid rgba(122,162,255,0.3); white-space:nowrap; }
+    .perfect-badge{ background:rgba(255,215,0,0.1); color:var(--gold); border:1px solid var(--gold); }
+    .theme-btn{ background:var(--btn); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:6px 10px; cursor:pointer; font-size:16px; flex-shrink:0; }
+
+    /* 통과 조건 진행 표시 */
+    .pass-status{ display:flex; gap:6px; margin-bottom:14px; }
+    .pass-chip{ flex:1; padding:8px 4px; border-radius:10px; border:1px solid var(--border); background:var(--btn); color:var(--muted); font-size:11px; font-weight:bold; text-align:center; transition:0.3s; }
+    .pass-chip.done{ background:rgba(46,125,50,0.2); color:#4caf50; border-color:#4caf50; }
+    .pass-chip.active{ border-color:var(--accent); color:var(--accent); background:rgba(122,162,255,0.1); }
+
+    .tab-bar{ display:flex; gap:6px; margin-bottom:15px; }
+    .tab-btn{ flex:1; padding:10px; border-radius:10px; border:1px solid var(--border); background:var(--btn); color:var(--muted); cursor:pointer; font-size:13px; font-weight:bold; transition:0.2s; }
+    .tab-btn.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+    .tab-btn.locked{ opacity:0.4; cursor:not-allowed; }
+    .tab-btn.cleared{ position:relative; }
+    .tab-btn.cleared::after{ content:"✓"; position:absolute; top:-6px; right:-4px; background:#4caf50; color:#fff; border-radius:50%; width:16px; height:16px; font-size:10px; display:flex; align-items:center; justify-content:center; }
+
+    .study-list{ list-style:none; padding:5px; margin:15px 0; text-align:left; max-height:40vh; overflow-y:auto; border:1px solid var(--border); border-radius:12px; background:rgba(0,0,0,0.1); }
+    .study-item{ display:flex; justify-content:space-between; padding:12px 14px; border-bottom:1px solid var(--border); font-size:15px; }
+    .study-item:last-child{ border-bottom:none; }
+    .study-item b{ color:var(--accent); }
+
+    .word-box{ margin-bottom:20px; min-height:110px; display:flex; flex-direction:column; justify-content:center; }
+    .word-box h1{ font-size:clamp(28px,9vw,44px); margin:0; letter-spacing:-1px; color:var(--text); word-break:break-all; }
+    .word-box .hint{ font-size:15px; line-height:1.5; color:var(--muted); margin-top:10px; padding:0 6px; word-break:break-word; }
+    .word-box .hint b{ font-weight:700; }
+    .choseong-hint{ font-size:18px; font-weight:700; color:var(--accent); letter-spacing:4px; margin:2px 0 14px; min-height:1.2em; }
+    .choseong-hint .cho-label{ font-size:12px; font-weight:600; color:var(--muted); letter-spacing:0; margin-right:8px; }
+
+    .options{ display:grid; gap:10px; }
+    .opt-btn{ background:var(--btn); border:1px solid var(--border); color:var(--text); padding:16px; border-radius:14px; cursor:pointer; text-align:left; font-size:15px; transition:0.2s; }
+    .opt-btn:hover:not(:disabled){ border-color:var(--accent); }
+    .opt-btn.correct{ background:var(--correct)!important; color:#fff; border-color:transparent; font-weight:bold; }
+    .opt-btn.wrong{ background:var(--wrong)!important; color:#fff; border-color:transparent; }
+
+    .write-input{ width:100%; padding:16px; background:var(--btn); border:2px solid var(--border); border-radius:14px; color:var(--text); font-size:20px; text-align:center; margin-bottom:10px; outline:none; transition:0.2s; }
+    .write-input:focus{ border-color:var(--accent); }
+    .write-input.correct-input{ border-color:var(--correct); background:rgba(46,125,50,0.15); }
+    .write-input.wrong-input{ border-color:var(--wrong); background:rgba(198,40,40,0.1); }
+    .write-answer-hint{ font-size:14px; color:var(--correct); font-weight:bold; min-height:1.4em; margin-bottom:8px; }
+
+    .similarity-badge{ display:inline-block; font-size:11px; padding:2px 8px; border-radius:10px; margin-left:6px; font-weight:bold; }
+    .badge-exact{ background:rgba(46,125,50,0.2); color:#4caf50; }
+    .badge-similar{ background:rgba(255,193,7,0.2); color:#ffc107; }
+
+    .main-btn{ width:100%; padding:16px; border-radius:14px; border:none; background:var(--accent); color:#fff; font-weight:800; cursor:pointer; margin-top:10px; font-size:16px; transition:0.3s; }
+    .main-btn:hover{ opacity:0.88; transform:scale(1.01); }
+    .retry-btn{ background:var(--btn); border:1px solid var(--accent); color:var(--accent); }
+    .retry-btn:hover{ background:var(--accent); color:#fff; }
+    .wrong-only-btn{ background:var(--btn); border:1px solid #ff7043; color:#ff7043; }
+    .wrong-only-btn:hover{ background:#ff7043; color:#fff; }
+
+    .reset-link{ display:block; margin-top:12px; font-size:12px; color:var(--muted); text-decoration:underline; cursor:pointer; background:none; border:none; width:100%; }
+    .hidden{ display:none!important; }
+
+    .result-score{ font-size:68px; font-weight:900; margin:10px 0; color:var(--text); }
+    .celebrate{ animation:celebrate-pop 0.6s cubic-bezier(0.175,0.885,0.32,1.275) infinite alternate; color:var(--gold); }
+    @keyframes celebrate-pop{ 0%{ transform:scale(1); filter:drop-shadow(0 0 5px var(--gold)); } 100%{ transform:scale(1.1); filter:drop-shadow(0 0 20px var(--gold)); } }
+
+    .wrong-note-list{ text-align:left; max-height:45vh; overflow-y:auto; border:1px solid var(--border); border-radius:12px; padding:5px; margin:12px 0; background:rgba(198,40,40,0.05); }
+    .wrong-note-item{ display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid var(--border); font-size:14px; }
+    .wrong-note-item:last-child{ border-bottom:none; }
+    .wrong-note-item .wn-word{ font-weight:bold; color:var(--accent); min-width:100px; }
+    .wrong-note-item .wn-count{ font-size:12px; color:#ff7043; font-weight:bold; padding:2px 8px; background:rgba(255,112,67,0.1); border-radius:10px; white-space:nowrap; }
+    .wrong-note-item .wn-meaning{ color:var(--muted); font-size:13px; flex:1; text-align:left; padding:0 8px; }
+    .wrong-note-item .wn-del{ flex:0 0 auto; font-size:12px; font-weight:bold; color:var(--progress); background:rgba(46,125,50,0.10); border:1px solid var(--progress); border-radius:10px; padding:5px 10px; cursor:pointer; white-space:nowrap; }
+    .wrong-note-item .wn-del:active{ transform:scale(0.94); }
+    .empty-note{ padding:30px; color:var(--muted); font-size:14px; }
+
+    .progress-bar-wrap{ width:100%; height:4px; background:var(--border); border-radius:2px; margin-bottom:14px; }
+    .progress-bar-fill{ height:100%; background:var(--accent); border-radius:2px; transition:width 0.3s; }
+
+    /* 단계 잠금 안내 */
+    .lock-notice{ background:rgba(255,112,67,0.1); border:1px solid #ff7043; border-radius:12px; padding:14px; margin-top:12px; font-size:13px; color:#ff7043; line-height:1.6; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <select id="set-jump" class="set-selector" onchange="jumpToSet(this.value)"></select>
+    <span id="stat-badge" class="best-score">Ready</span>
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+  </div>
+
+  <!-- 3단계 통과 진행 표시 -->
+  <div id="pass-status" class="pass-status hidden">
+    <div class="pass-chip" id="chip-mc">① 객관식</div>
+    <div class="pass-chip" id="chip-wr">② 주관식</div>
+    <div class="pass-chip" id="chip-wn">③ 오답노트</div>
+  </div>
+
+  <!-- 탭 -->
+  <div id="main-tabs" class="tab-bar hidden">
+    <button class="tab-btn" id="tab-mc" onclick="tryTab('mc')">객관식</button>
+    <button class="tab-btn" id="tab-wr" onclick="tryTab('wr')">주관식</button>
+    <button class="tab-btn" id="tab-wn" onclick="tryTab('wn')">오답노트</button>
+  </div>
+
+  <!-- 학습 화면 -->
+  <div id="study-view" class="card">
+    <h2 id="study-title" style="margin-top:0;font-size:20px;">단어 암기 (통합)</h2>
+    <p id="review-badge" style="font-size:12px;color:var(--accent);margin-top:-10px;" class="hidden">★ 이전 학습 단어 10개가 무작위 시험에 포함됩니다!</p>
+    <div id="study-list" class="study-list"></div>
+    <div id="pass-info" class="lock-notice hidden"></div>
+    <button class="main-btn" id="start-btn" onclick="startMode()">마스터 시험 시작</button>
+    <button class="reset-link" onclick="resetAllProgress()">모든 학습 기록 초기화</button>
+  </div>
+
+  <!-- 객관식 화면 -->
+  <div id="quiz-view" class="card hidden">
+    <div class="header">
+      <span class="best-score">① 객관식</span>
+      <span id="quiz-progress-text" style="color:var(--accent);font-weight:bold;">남은 단어: 0</span>
+    </div>
+    <div class="progress-bar-wrap"><div id="quiz-progress-bar" class="progress-bar-fill" style="width:0%"></div></div>
+    <div class="word-box"><h1 id="target-word">Word</h1></div>
+    <div id="options-container" class="options"></div>
+    <div id="feedback" style="margin-top:16px;font-size:15px;font-weight:bold;min-height:1.2em;"></div>
+    <button id="next-q-btn" class="main-btn hidden" onclick="renderQuestion()">다음 문제 →</button>
+  </div>
+
+  <!-- 주관식 화면 -->
+  <div id="write-view" class="card hidden">
+    <div class="header">
+      <span class="best-score">② 주관식</span>
+      <span id="write-progress-text" style="color:var(--accent);font-weight:bold;">0 / 0</span>
+    </div>
+    <div class="progress-bar-wrap"><div id="write-progress-bar" class="progress-bar-fill" style="width:0%"></div></div>
+    <div class="word-box">
+      <h1 id="write-target-word">Word</h1>
+      <div class="hint" id="write-hint"></div>
+    </div>
+    <div class="choseong-hint" id="write-choseong"></div>
+    <input type="text" id="write-input" class="write-input" placeholder="한글 뜻을 입력하세요" onkeydown="handleWriteKey(event)" autocomplete="off" autocorrect="off" />
+    <div id="write-answer-hint" class="write-answer-hint"></div>
+    <button id="write-submit-btn" class="main-btn" onclick="submitWriteAnswer()">확인</button>
+    <button id="write-next-btn" class="main-btn hidden" onclick="nextWriteQuestion()">다음 문제 →</button>
+  </div>
+
+  <!-- 오답노트 화면 -->
+  <div id="wrong-note-view" class="card hidden">
+    <div class="header">
+      <span class="best-score">③ 오답노트</span>
+      <span id="wn-count" style="color:var(--accent);font-weight:bold;">0개</span>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin:4px 0 12px;line-height:1.5;">틀린 단어만 모았어요. 복습에서 맞히면 목록에서 자동으로 사라집니다.</p>
+    <div id="wn-actions" style="display:flex;gap:8px;margin-bottom:14px;">
+      <button class="main-btn" style="margin:0;flex:1;" onclick="startWrongReview('mc')">객관식 복습</button>
+      <button class="main-btn" style="margin:0;flex:1;" onclick="startWrongReview('wr')">주관식 복습</button>
+    </div>
+    <div id="wn-list" class="wrong-note-list"></div>
+    <button class="reset-link" onclick="loadSet()">← 학습 화면으로</button>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div id="result-view" class="card hidden">
+    <h2 id="result-title">CLEAR!</h2>
+    <div id="result-score-container" class="result-score">🏆</div>
+    <p id="result-msg" style="line-height:1.6;padding:0 20px;font-size:14px;"></p>
+    <div id="result-next-area"></div>
+  </div>
+</div>
+
+<script>
+const ALL_WORDS = [
+    {w:"antidote", m:"해독제"},
+    {w:"antipathy", m:"반감"},
+    {w:"antiseptic", m:"소독제"},
+    {w:"census", m:"인구 조사"},
+    {w:"cessation", m:"중지"},
+    {w:"chagrin", m:"원통함"},
+    {w:"chaotic", m:"혼란스러운"},
+    {w:"charlatan", m:"사기꾼"},
+    {w:"chary", m:"조심스러운"},
+    {w:"chasm", m:"깊은 틈"},
+    {w:"chaste", m:"순결한"},
+    {w:"chasten", m:"훈육하다"},
+    {w:"chastise", m:"응징하다"},
+    {w:"chicanery", m:"속임수"},
+    {w:"chide", m:"꾸짖다"},
+    {w:"choleric", m:"화를 잘 내는"},
+    {w:"chronic", m:"만성적인"},
+    {w:"chubby", m:"통통한"},
+    {w:"citadel", m:"성채"},
+    {w:"cite", m:"인용하다"},
+    {w:"clairvoyant", m:"통찰력 있는"},
+    {w:"clamber", m:"기어오르다"},
+    {w:"clamorous", m:"시끄러운"},
+    {w:"befall", m:"일어나다"},
+    {w:"beget", m:"낳다"},
+    {w:"beguile", m:"속이다"},
+    {w:"behold", m:"바라보다"},
+    {w:"belabor", m:"장황히 말하다"},
+    {w:"belated", m:"늦은"},
+    {w:"belie", m:"착각케 하다"},
+    {w:"belittle", m:"비하하다"},
+    {w:"bemoan", m:"한탄하다"},
+    {w:"bemuse", m:"멍하게 하다"},
+    {w:"bequeath", m:"유언 남기다"},
+    {w:"berate", m:"꾸짖다"},
+    {w:"bereave", m:"사별하다"},
+    {w:"beseech", m:"간청하다"},
+    {w:"beset", m:"괴롭히다"},
+    {w:"besiege", m:"포위하다"},
+    {w:"bethink", m:"숙고하다"},
+    {w:"betroth", m:"약혼시키다"},
+    {w:"bewail", m:"슬퍼하다"},
+    {w:"bewitch", m:"매혹하다"},
+    {w:"benediction", m:"축복"},
+    {w:"benefactor", m:"후원자"},
+    {w:"beneficent", m:"자비로운"},
+    {w:"benevolent", m:"자애로운"},
+    {w:"benign", m:"친절한"},
+    {w:"bounteous", m:"관대한"},
+    {w:"clandestine", m:"은밀한"},
+    {w:"cleave", m:"쪼개다"},
+    {w:"clemency", m:"관용"},
+    {w:"cliche", m:"진부한 표현"},
+    {w:"clientele", m:"고객들"},
+    {w:"climax", m:"절정"},
+    {w:"clique", m:"파벌"},
+    {w:"clog", m:"막다"},
+    {w:"cloister", m:"수도원"},
+    {w:"clone", m:"복제"},
+    {w:"coax", m:"달래다"},
+    {w:"colossal", m:"거대한"},
+    {w:"coma", m:"혼수상태"},
+    {w:"comely", m:"어여쁜"},
+    {w:"corollary", m:"결과"},
+    {w:"corpulent", m:"뚱뚱한"},
+    {w:"covetous", m:"탐욕스러운"},
+    {w:"coy", m:"수줍어하는"},
+    {w:"crash", m:"충돌"},
+    {w:"craven", m:"겁쟁이"},
+    {w:"circuit", m:"회로"},
+    {w:"circumference", m:"원주"},
+    {w:"circumlocution", m:"완곡한 표현"},
+    {w:"circumscribe", m:"제한하다"},
+    {w:"circumspect", m:"신중한"},
+    {w:"circumvent", m:"우회하다"},
+    {w:"coalition", m:"연합"},
+    {w:"coerce", m:"강요하다"},
+    {w:"cogent", m:"설득력 있는"},
+    {w:"cogitate", m:"숙고하다"},
+    {w:"cognate", m:"조상이 같은"},
+    {w:"cognition", m:"인식"},
+    {w:"cohere", m:"일관성 있다"},
+    {w:"coincide", m:"일치하다"},
+    {w:"collaborate", m:"협력하다"},
+    {w:"collapse", m:"붕괴"},
+    {w:"collate", m:"분석하다"},
+    {w:"collateral", m:"담보"},
+    {w:"colleague", m:"동료"},
+    {w:"collide", m:"충돌"},
+    {w:"colloquial", m:"구어체의"},
+    {w:"collude", m:"공모하다"},
+    {w:"combustion", m:"연소"},
+    {w:"commandeer", m:"징발하다"},
+    {w:"commemorate", m:"기념하다"},
+    {w:"commence", m:"시작하다"},
+    {w:"commend", m:"칭찬하다"},
+    {w:"commensurate", m:"어울리는"},
+    {w:"commiserate", m:"동정하다"},
+    {w:"commodious", m:"널찍한"},
+    {w:"credence", m:"신뢰"},
+    {w:"credulous", m:"잘 믿는"},
+    {w:"creed", m:"신조"},
+    {w:"cripple", m:"불구로 만들다"},
+    {w:"criterion", m:"기준"},
+    {w:"cryptic", m:"수수께끼 같은"},
+    {w:"cue", m:"신호"},
+    {w:"culminate", m:"절정에 달하다"},
+    {w:"culpable", m:"과실 있는"},
+    {w:"cupidity", m:"탐욕"},
+    {w:"curator", m:"큐레이터"},
+    {w:"curb", m:"억제하다"},
+    {w:"cursory", m:"대충 하는"},
+    {w:"curtail", m:"단축하다"},
+    {w:"cutting-edge", m:"최첨단의"},
+    {w:"cynical", m:"냉소적인"},
+    {w:"dally", m:"꾸물거리다"},
+    {w:"dampen", m:"꺾다"},
+    {w:"dastard", m:"겁쟁이"},
+    {w:"dauntless", m:"불굴의"},
+    {w:"commonplace", m:"평범한"},
+    {w:"commotion", m:"동요"},
+    {w:"compact", m:"조밀한"},
+    {w:"compassion", m:"동정심"},
+    {w:"compatible", m:"양립 가능"},
+    {w:"compensate", m:"보상하다"},
+    {w:"compile", m:"편집하다"},
+    {w:"complacent", m:"자기만족"},
+    {w:"complaisant", m:"유순한"},
+    {w:"complement", m:"보완하다"},
+    {w:"complexion", m:"안색"},
+    {w:"complicate", m:"복잡케 하다"},
+    {w:"compliment", m:"칭찬"},
+    {w:"component", m:"구성 요소"},
+    {w:"comprehend", m:"이해하다"},
+    {w:"compress", m:"압축"},
+    {w:"comprise", m:"구성되다"},
+    {w:"compunction", m:"양심 가책"},
+    {w:"dawdle", m:"꾸물거리다"},
+    {w:"deadlock", m:"교착 상태"},
+    {w:"dearth", m:"부족"},
+    {w:"decimate", m:"대량 학살"},
+    {w:"decorous", m:"예의 바른"},
+    {w:"deft", m:"능숙한"},
+    {w:"deleterious", m:"해로운"},
+    {w:"delve", m:"탐구하다"},
+    {w:"dermatologist", m:"피부과 의사"},
+    {w:"despotism", m:"독재"},
+    {w:"dexterous", m:"능숙한"},
+    {w:"dictum", m:"격언"},
+    {w:"diletteante", m:"아마추어"},
+    {w:"din", m:"소음"},
+    {w:"dire", m:"심각한"},
+    {w:"dismal", m:"음울한"},
+    {w:"ditch", m:"도랑"},
+    {w:"diurnal", m:"주간의"},
+    {w:"docile", m:"유순한"},
+    {w:"dogmatic", m:"독단적인"},
+    {w:"concede", m:"인정하다"},
+    {w:"conciliate", m:"달래다"},
+    {w:"concoct", m:"만들어 내다"},
+    {w:"concourse", m:"중앙홀"},
+    {w:"concur", m:"동의하다"},
+    {w:"condemn", m:"비난하다"},
+    {w:"condense", m:"응축시키다"},
+    {w:"condescend", m:"자신을 낮추다"},
+    {w:"condole", m:"조의 표하다"},
+    {w:"condone", m:"용납하다"},
+    {w:"confederate", m:"공범"},
+    {w:"confer", m:"수여하다"},
+    {w:"confine", m:"제한하다"},
+    {w:"confiscate", m:"몰수하다"},
+    {w:"conform", m:"따르다"},
+    {w:"confound", m:"당혹케 하다"},
+    {w:"confront", m:"맞서다"},
+    {w:"congenial", m:"마음 맞는"},
+    {w:"congenital", m:"선천적인"},
+    {w:"congest", m:"정체시키다"},
+    {w:"conglomerate", m:"복합 기업"},
+    {w:"dolorous", m:"슬픈"},
+    {w:"dormant", m:"휴면기의"},
+    {w:"dour", m:"시무룩한"},
+    {w:"dowdy", m:"단정치 못한"},
+    {w:"down-to-earth", m:"현실적인"},
+    {w:"drastic", m:"격렬한"},
+    {w:"drawback", m:"결점"},
+    {w:"drudgery", m:"고된 일"},
+    {w:"dub", m:"별명 붙이다"},
+    {w:"dubious", m:"의심스러운"},
+    {w:"ductile", m:"연성 있는"},
+    {w:"earmark", m:"배정하다"},
+    {w:"earthy", m:"저속한"},
+    {w:"eavesdrop", m:"엿듣다"},
+    {w:"ecology", m:"생태계"},
+    {w:"edify", m:"교화하다"},
+    {w:"eerie", m:"괴상한"},
+    {w:"elasticity", m:"탄력"},
+    {w:"elegiac", m:"슬픈"},
+    {w:"emulate", m:"모방하다"},
+    {w:"congregate", m:"모이다"},
+    {w:"conjecture", m:"추측"},
+    {w:"conjure", m:"마법 부리다"},
+    {w:"connubial", m:"부부의"},
+    {w:"conscript", m:"징집하다"},
+    {w:"consecrate", m:"신성케 하다"},
+    {w:"consecutive", m:"연속적인"},
+    {w:"consensus", m:"합의"},
+    {w:"conserve", m:"보존하다"},
+    {w:"consign", m:"맡기다"},
+    {w:"console", m:"위로하다"},
+    {w:"consolidate", m:"통합하다"},
+    {w:"consort", m:"교제하다"},
+    {w:"conspire", m:"공모하다"},
+    {w:"constellation", m:"별자리"},
+    {w:"constrict", m:"수축하다"},
+    {w:"construe", m:"해석하다"},
+    {w:"consummate", m:"완벽히 하다"},
+    {w:"contagious", m:"전염되는"},
+    {w:"contaminate", m:"오염시키다"},
+    {w:"contemn", m:"경멸하다"},
+    {w:"enigma", m:"수수께끼"},
+    {w:"ennui", m:"지루함"},
+    {w:"equanimity", m:"침착"},
+    {w:"equity", m:"공평"},
+    {w:"equivocal", m:"모호한"},
+    {w:"eschew", m:"피하다"},
+    {w:"ethnic", m:"민족의"},
+    {w:"ethos", m:"기풍"},
+    {w:"etymologist", m:"어원학자"},
+    {w:"fabricate", m:"날조하다"},
+    {w:"facetious", m:"익살맞은"},
+    {w:"facilitate", m:"촉진하다"},
+    {w:"faction", m:"파벌"},
+    {w:"factitious", m:"인위적인"},
+    {w:"fallacious", m:"허위의"},
+    {w:"fallout", m:"여파"},
+    {w:"fanaticism", m:"광신"},
+    {w:"fancy", m:"공상"},
+    {w:"far-fetched", m:"믿기지 않는"},
+    {w:"fastidious", m:"까다로운"},
+    {w:"abdicate", m:"퇴위하다"},
+    {w:"abduct", m:"유괴하다"},
+    {w:"aberrant", m:"도리를 벗어난"},
+    {w:"abhor", m:"혐오하다"},
+    {w:"abject", m:"비참한"},
+    {w:"abolish", m:"폐지하다"},
+    {w:"abominate", m:"증오하다"},
+    {w:"aboriginal", m:"원주민의"},
+    {w:"abortion", m:"낙태"},
+    {w:"abrasive", m:"연마제, 거친"},
+    {w:"abrogate", m:"폐지하다"},
+    {w:"abrupt", m:"갑작스러운"},
+    {w:"abscond", m:"도주하다"},
+    {w:"absolve", m:"면죄하다"},
+    {w:"abstain", m:"삼가다"},
+    {w:"abstruse", m:"난해한"},
+    {w:"allay", m:"완화시키다"},
+    {w:"avert", m:"피하다"},
+    {w:"acknowledge", m:"인정하다"},
+    {w:"acme", m:"절정"},
+    {w:"acrid", m:"매운, 신랄한"},
+    {w:"acrimonious", m:"험악한"},
+    {w:"acumen", m:"통찰력"},
+    {w:"aftermath", m:"여파"},
+    {w:"agenda", m:"의제"},
+    {w:"agile", m:"민첩한"},
+    {w:"agitate", m:"선동하다"},
+    {w:"alacrity", m:"민첩"},
+    {w:"alienate", m:"소외시키다"},
+    {w:"altercation", m:"말다툼"},
+    {w:"altruistic", m:"이타적인"},
+    {w:"amalgamate", m:"합병하다"},
+    {w:"amenity", m:"편의 시설"},
+    {w:"abandon", m:"버리다"},
+    {w:"abase", m:"낮추다"},
+    {w:"abate", m:"줄이다"},
+    {w:"abbreviate", m:"단축하다"},
+    {w:"abet", m:"부추기다"},
+    {w:"abridge", m:"요약하다"},
+    {w:"accede", m:"동의하다"},
+    {w:"accelerate", m:"가속하다"},
+    {w:"accessory", m:"부속물"},
+    {w:"acclaim", m:"갈채"},
+    {w:"acclivity", m:"오르막길"},
+    {w:"accomplice", m:"공범"},
+    {w:"accost", m:"다가가 말 걸다"},
+    {w:"accretion", m:"증가"},
+    {w:"accumulate", m:"축적하다"},
+    {w:"acquiesce", m:"묵인하다"},
+    {w:"acquit", m:"무죄 선고하다"},
+    {w:"annals", m:"연대기"},
+    {w:"aperture", m:"구멍"},
+    {w:"aptitude", m:"소질"},
+    {w:"arable", m:"경작 가능한"},
+    {w:"arduous", m:"힘든"},
+    {w:"arid", m:"건조한"},
+    {w:"armistice", m:"휴전"},
+    {w:"artifice", m:"책략"},
+    {w:"artisan", m:"기능공"},
+    {w:"ascetic", m:"금욕적인"},
+    {w:"astral", m:"별의"},
+    {w:"astronaut", m:"우주 비행사"},
+    {w:"astute", m:"기민한"},
+    {w:"atone", m:"보상하다"},
+    {w:"atrocious", m:"극악무도한"},
+    {w:"audacity", m:"대담함"},
+    {w:"augment", m:"늘리다"},
+    {w:"auspicious", m:"길조의"},
+    {w:"austerity", m:"엄격함"},
+    {w:"authenticate", m:"입증하다"},
+    {w:"addict", m:"중독자"},
+    {w:"adept", m:"숙련된"},
+    {w:"adhere", m:"고수하다"},
+    {w:"adjacent", m:"인접한"},
+    {w:"adjourn", m:"연기하다"},
+    {w:"adjunct", m:"부속물"},
+    {w:"administer", m:"관리하다"},
+    {w:"admonish", m:"훈계하다"},
+    {w:"adopt", m:"채택하다"},
+    {w:"adore", m:"숭배하다"},
+    {w:"adorn", m:"장식하다"},
+    {w:"adroit", m:"능숙한"},
+    {w:"adulterate", m:"불순물 섞다"},
+    {w:"adumbrate", m:"어렴풋이 보여주다"},
+    {w:"advent", m:"출현"},
+    {w:"adventitious", m:"우연한"},
+    {w:"adverse", m:"반대의"},
+    {w:"avarice", m:"탐욕"},
+    {w:"avid", m:"열렬한"},
+    {w:"awe", m:"경외감"},
+    {w:"baffle", m:"당황하게 하다"},
+    {w:"balmy", m:"온화한"},
+    {w:"banal", m:"진부한"},
+    {w:"baneful", m:"해로운"},
+    {w:"banish", m:"추방하다"},
+    {w:"banter", m:"농담"},
+    {w:"beatific", m:"행복이 넘치는"},
+    {w:"bedrock", m:"기반"},
+    {w:"bellicose", m:"호전적인"},
+    {w:"bicker", m:"말다툼하다"},
+    {w:"bigotry", m:"편견"},
+    {w:"bizarre", m:"기괴한"},
+    {w:"bland", m:"부드러운"},
+    {w:"blandish", m:"구슬리다"},
+    {w:"blaspheme", m:"신성 모독하다"},
+    {w:"blatant", m:"명백한"},
+    {w:"bleak", m:"황량한"},
+    {w:"advert", m:"언급하다"},
+    {w:"advocate", m:"옹호하다"},
+    {w:"affable", m:"상냥한"},
+    {w:"affiance", m:"약혼시키다"},
+    {w:"affiliate", m:"제휴하다"},
+    {w:"affinity", m:"친밀감"},
+    {w:"affluent", m:"부유한"},
+    {w:"affront", m:"모욕하다"},
+    {w:"aggravate", m:"악화시키다"},
+    {w:"aggregate", m:"합계의"},
+    {w:"aggressive", m:"공격적인"},
+    {w:"aggrieve", m:"괴롭히다"},
+    {w:"alleviate", m:"완화시키다"},
+    {w:"allocate", m:"할당하다"},
+    {w:"alloy", m:"합금"},
+    {w:"allude", m:"암시하다"},
+    {w:"allure", m:"유혹하다"},
+    {w:"alluvial", m:"충적의"},
+    {w:"ameliorate", m:"개선하다"},
+    {w:"amenable", m:"유순한"},
+    {w:"bliss", m:"행복"},
+    {w:"blithe", m:"즐거운"},
+    {w:"blossom", m:"꽃피우다"},
+    {w:"blunder", m:"실수"},
+    {w:"blunt", m:"무딘"},
+    {w:"blurred", m:"흐릿한"},
+    {w:"bogus", m:"가짜의"},
+    {w:"boisterous", m:"시끄러운"},
+    {w:"bolster", m:"지지하다"},
+    {w:"bombastic", m:"과장된"},
+    {w:"bountiful", m:"풍부한"},
+    {w:"brag", m:"자랑하다"},
+    {w:"bravado", m:"허장성세"},
+    {w:"brawl", m:"싸움"},
+    {w:"brazen", m:"뻔뻔스러운"},
+    {w:"breach", m:"위반"},
+    {w:"brevity", m:"간결함"},
+    {w:"brisk", m:"활기 있는"},
+    {w:"bristle", m:"화내다"},
+    {w:"brittle", m:"깨지기 쉬운"},
+    {w:"annex", m:"병합하다"},
+    {w:"annihilate", m:"전멸시키다"},
+    {w:"aplomb", m:"침착"},
+    {w:"appal", m:"오싹하게 하다"},
+    {w:"apparatus", m:"장치"},
+    {w:"apparel", m:"의복"},
+    {w:"apparition", m:"유령"},
+    {w:"appease", m:"달래다"},
+    {w:"append", m:"덧붙이다"},
+    {w:"applaud", m:"박수 보내다"},
+    {w:"apposite", m:"적절한"},
+    {w:"appraise", m:"평가하다"},
+    {w:"apprehend", m:"이해하다, 체포하다"},
+    {w:"apprentice", m:"도제"},
+    {w:"apprise", m:"알리다"},
+    {w:"approbation", m:"승인"},
+    {w:"appropriate", m:"적절한"},
+    {w:"approximate", m:"대략의"},
+    {w:"arbitrary", m:"임의적인"},
+    {w:"brochure", m:"안내 책자"},
+    {w:"browse", m:"훑어보다"},
+    {w:"bruise", m:"타박상"},
+    {w:"brusque", m:"무뚝뚝한"},
+    {w:"brusk", m:"무뚝뚝한"},
+    {w:"bucolic", m:"전원적인"},
+    {w:"bully", m:"괴롭히다"},
+    {w:"burgeon", m:"싹트다"},
+    {w:"bustle", m:"분주히 움직이다"},
+    {w:"buttress", m:"지지하다"},
+    {w:"buxom", m:"풍만한"},
+    {w:"cabal", m:"비밀 결사"},
+    {w:"cadaverous", m:"창백한"},
+    {w:"cajole", m:"속이다"},
+    {w:"caliber", m:"역량"},
+    {w:"callous", m:"냉담한"},
+    {w:"callow", m:"미숙한"},
+    {w:"calumny", m:"비방"},
+    {w:"candor", m:"솔직함"},
+    {w:"canvass", m:"조사하다"},
+    {w:"capacious", m:"널찍한"},
+    {w:"arbitrate", m:"중재하다"},
+    {w:"array", m:"배열하다"},
+    {w:"arrogant", m:"거만한"},
+    {w:"ascertain", m:"확인하다"},
+    {w:"ascribe", m:"~의 탓으로 돌리다"},
+    {w:"asperse", m:"비방하다"},
+    {w:"aspire", m:"열망하다"},
+    {w:"assail", m:"공격하다"},
+    {w:"assault", m:"습격하다"},
+    {w:"assent", m:"동의하다"},
+    {w:"asset", m:"자산"},
+    {w:"assiduous", m:"근면한"},
+    {w:"assimilate", m:"동화되다"},
+    {w:"assuage", m:"완화시키다"},
+    {w:"astound", m:"놀라게 하다"},
+    {w:"attest", m:"증명하다"},
+    {w:"attire", m:"의상"},
+    {w:"attorney", m:"변호사"},
+    {w:"attribute", m:"특성, ~의 탓으로 돌리다"},
+    {w:"avenge", m:"보복하다"},
+    {w:"avenue", m:"거리"},
+    {w:"avow", m:"공언하다"},
+    {w:"famish", m:"굶주리게 하다"},
+    {w:"capitulate", m:"굴복하다"},
+    {w:"caprice", m:"변덕"},
+    {w:"capsize", m:"뒤집히다"},
+    {w:"caption", m:"자막"},
+    {w:"captious", m:"트집 잡는"},
+    {w:"cardinal", m:"주요한"},
+    {w:"caricature", m:"희화화"},
+    {w:"carnage", m:"대학살"},
+    {w:"carnivorous", m:"육식의"},
+    {w:"carping", m:"트집 잡는"},
+    {w:"carrion", m:"썩은 고기"},
+    {w:"cascade", m:"작은 폭포"},
+    {w:"castigate", m:"징계하다"},
+    {w:"casualty", m:"사상자"},
+    {w:"cathartic", m:"배설의"},
+    {w:"caustic", m:"부식성의, 신랄한"},
+    {w:"cede", m:"양도하다"},
+    {w:"celestial", m:"하늘의"},
+    {w:"censor", m:"검열관"},
+    {w:"censure", m:"비난"},
+    {w:"adamant", m:"단호한"},
+    {w:"agnostic", m:"불가지론자"},
+    {w:"amnesty", m:"사면"},
+    {w:"amorphous", m:"무정형의"},
+    {w:"anarchy", m:"무정부 상태"},
+    {w:"anecdote", m:"일화"},
+    {w:"anomalous", m:"변칙적인"},
+    {w:"anonymous", m:"익명의"},
+    {w:"apathy", m:"무관심"},
+    {w:"aseptic", m:"무균의"},
+    {w:"atheist", m:"무신론자"},
+    {w:"atrophy", m:"위축"},
+    {w:"atypical", m:"비전형적인"},
+    {w:"aghast", m:"겁에 질린"},
+    {w:"akin", m:"유사한"},
+    {w:"aloof", m:"냉담한"},
+    {w:"amaze", m:"놀라게 하다"},
+    {w:"askance", m:"곁눈질로"},
+    {w:"astray", m:"길을 잃어"},
+    {w:"awry", m:"엉망인"},
+    {w:"antagonist", m:"적대자"},
+    {w:"antibiotic", m:"항생제"},
+    {w:"haggard", m:"초췌한, 여윈"},
+    {w:"haggle", m:"흥정하다"},
+    {w:"hail", m:"환호하다, 묘사하다"},
+    {w:"halcyon", m:"평온한, 행복한"},
+    {w:"hallowed", m:"신성한"},
+    {w:"hallucination", m:"환각, 망상"},
+    {w:"hamlet", m:"작은 마을"},
+    {w:"hamper", m:"방해하다"},
+    {w:"haphazard", m:"무계획적인, 되는 대로의"},
+    {w:"harangue", m:"열변을 토하다"},
+    {w:"harass", m:"괴롭히다"},
+    {w:"harbinger", m:"전조, 선구자"},
+    {w:"harness", m:"이용하다, 마구"},
+    {w:"harry", m:"괴롭히다, 몰아붙이다"},
+    {w:"haughty", m:"거만한"},
+    {w:"havoc", m:"대혼란, 파괴"},
+    {w:"hazardous", m:"위험한"},
+    {w:"hazy", m:"흐릿한, 안개 낀"},
+    {w:"hedonism", m:"쾌락주의"},
+    {w:"embargo", m:"금반, 통상 금지"},
+    {w:"embark", m:"착수하다, 탑승하다"},
+    {w:"embellish", m:"장식하다, 꾸미다"},
+    {w:"embezzle", m:"횡령하다"},
+    {w:"emblem", m:"상징"},
+    {w:"embody", m:"구현하다, 구체화하다"},
+    {w:"emboss", m:"돋을새김하다"},
+    {w:"embryo", m:"배아, 초기의 것"},
+    {w:"empower", m:"권한을 주다"},
+    {w:"enact", m:"제정하다, 상연하다"},
+    {w:"enchant", m:"황홀하게 하다, 매혹하다"},
+    {w:"encircle", m:"에워싸다"},
+    {w:"encompass", m:"포함하다, 둘러싸다"},
+    {w:"encounter", m:"마주치다, 조우"},
+    {w:"encroach", m:"침해하다, 잠식하다"},
+    {w:"encumber", m:"방해하다, 지장을 주다"},
+    {w:"encyclopedia", m:"백과사전"},
+    {w:"endanger", m:"위험에 빠뜨리다"},
+    {w:"endear", m:"사랑받게 하다"},
+    {w:"endemic", m:"고유의, 풍토적인"},
+    {w:"endorse", m:"승인하다, 지지하다"},
+    {w:"engender", m:"발생시키다, 낳다"},
+    {w:"engrave", m:"새기다, 조각하다"},
+    {w:"engross", m:"몰두시키다, 빼앗다"},
+    {w:"enhance", m:"향상시키다"},
+    {w:"heedless", m:"부주의한"},
+    {w:"hefty", m:"크고 무거운, 많은"},
+    {w:"heinous", m:"악랄한, 가학적인"},
+    {w:"herbivore", m:"초식 동물"},
+    {w:"heresy", m:"이단"},
+    {w:"hermitage", m:"은둔소, 은거지"},
+    {w:"hiatus", m:"중단, 틈"},
+    {w:"hibernate", m:"동면하다"},
+    {w:"hideous", m:"흉측한, 끔찍한"},
+    {w:"hierarchy", m:"계급, 위계"},
+    {w:"hilarious", m:"아주 우스운, 즐거운"},
+    {w:"hoarse", m:"쉰 목소리의"},
+    {w:"hoax", m:"날조, 속임수"},
+    {w:"holistic", m:"전체론적인"},
+    {w:"horrid", m:"무시무시한, 불쾌한"},
+    {w:"horticultural", m:"원예의"},
+    {w:"hospitality", m:"환대, 친절"},
+    {w:"hubris", m:"자만심, 오만"},
+    {w:"humane", m:"인도적인, 자비로운"},
+    {w:"humdrum", m:"단조로운, 지루한"},
+    {w:"enjoin", m:"명령하다, 금지하다"},
+    {w:"enlist", m:"입대하다, 도움을 얻다"},
+    {w:"enliven", m:"활기띠게 하다"},
+    {w:"ennoble", m:"품격있게 하다"},
+    {w:"enrage", m:"화나게 하다"},
+    {w:"enroll", m:"등록하다"},
+    {w:"ensemble", m:"앙상블"},
+    {w:"ensign", m:"깃발"},
+    {w:"enslave", m:"노예로 만들다"},
+    {w:"ensue", m:"뒤따라 발생하다"},
+    {w:"ensure", m:"보장하다"},
+    {w:"entail", m:"수반하다, 필요로 하다"},
+    {w:"entangle", m:"얽히게 하다"},
+    {w:"enthrall", m:"매료시키다, 사로잡다"},
+    {w:"entrone", m:"왕위에 앉히다"},
+    {w:"entice", m:"유혹하다, 유인하다"},
+    {w:"entitle", m:"권리를 주다"},
+    {w:"entreat", m:"간청하다"},
+    {w:"entrench", m:"단단히 자리 잡게 하다"},
+    {w:"entrust", m:"맡기다"},
+    {w:"envoy", m:"사절, 특사"},
+    {w:"ephemeral", m:"일시적인, 덧없는"},
+    {w:"epidemic", m:"유행병, 확산"},
+    {w:"epigram", m:"경구"},
+    {w:"epilogue", m:"에필로그"},
+    {w:"epitome", m:"전형, 완벽한 본보기"},
+    {w:"epoch", m:"시대, 신기원"},
+    {w:"humid", m:"습한, 눅눅한"},
+    {w:"humility", m:"겸손"},
+    {w:"hybrid", m:"잡종, 혼합물"},
+    {w:"idiosyncrasy", m:"특이 체질, 개성"},
+    {w:"idolize", m:"우상화하다"},
+    {w:"inkling", m:"암시, 눈치챔"},
+    {w:"insular", m:"배타적인, 섬의"},
+    {w:"irascible", m:"화를 잘 내는"},
+    {w:"irksome", m:"지루한, 짜증나는"},
+    {w:"ironic", m:"반어적인, 비꼬는"},
+    {w:"isolate", m:"격리하다, 고립시키다"},
+    {w:"itinerant", m:"떠돌아다니는"},
+    {w:"jeopardy", m:"위험"},
+    {w:"jettison", m:"내던지다, 버리다"},
+    {w:"jocose", m:"우스꽝스러운"},
+    {w:"jubilation", m:"환희, 축하"},
+    {w:"judicious", m:"현명한, 신중한"},
+    {w:"juncture", m:"시점, 접합점"},
+    {w:"jurisdiction", m:"관할권"},
+    {w:"kindle", m:"불붙이다, 자극하다"},
+    {w:"allege", m:"주장하다, 단언하다"},
+    {w:"eccentric", m:"별난, 기이한"},
+    {w:"eclipse", m:"식, 가리다"},
+    {w:"ecstasy", m:"황홀경, 희열"},
+    {w:"efface", m:"지우다, 말살하다"},
+    {w:"effigy", m:"형상, 인형"},
+    {w:"elaborate", m:"정교한, 정성 들인"},
+    {w:"elapse", m:"지나다, 경과하다"},
+    {w:"elate", m:"기운을 북돋우다"},
+    {w:"elicit", m:"이끌어내다"},
+    {w:"eligible", m:"적격의, 합당한"},
+    {w:"elucidate", m:"설명하다, 명료하게 하다"},
+    {w:"elude", m:"피하다, 빠져나가다"},
+    {w:"emancipate", m:"해방시키다"},
+    {w:"emerge", m:"나타나다, 드러나다"},
+    {w:"emigrate", m:"이주하다"},
+    {w:"eminent", m:"저명한, 탁월한"},
+    {w:"emit", m:"내뿜다, 방출하다"},
+    {w:"enervate", m:"기력을 떨어뜨리다"},
+    {w:"enumerate", m:"열거하다"},
+    {w:"eradicate", m:"근절하다, 뿌리 뽑다"},
+    {w:"erode", m:"침식하다, 약화시키다"},
+    {w:"erudite", m:"박식한, 학식 있는"},
+    {w:"erupt", m:"분출하다, 폭발하다"},
+    {w:"escort", m:"호송하다"},
+    {w:"evacuate", m:"대피시키다, 비우다"},
+    {w:"evade", m:"피하다, 모면하다"},
+    {w:"evaluate", m:"평가하다"},
+    {w:"evaporate", m:"증발하다"},
+    {w:"evoke", m:"불러일으키다"},
+    {w:"evolve", m:"진화하다, 발전하다"},
+    {w:"exalt", m:"칭송하다, 격상시키다"},
+    {w:"exasperate", m:"화나게 하다"},
+    {w:"excavate", m:"발굴하다"},
+    {w:"excerpt", m:"발췌, 인용"},
+    {w:"exempt", m:"면제된"},
+    {w:"exhale", m:"내쉬다, 방출하다"},
+    {w:"exhort", m:"권고하다"},
+    {w:"exile", m:"추방, 망명"},
+    {w:"exonerate", m:"무죄를 입증하다"},
+    {w:"exorbitant", m:"과도한, 터무니없는"},
+    {w:"exotic", m:"외래의, 이국적인"},
+    {w:"expedient", m:"방책, 편리한"},
+    {w:"expedite", m:"신속히 처리하다"},
+    {w:"expel", m:"추방하다, 쫓아내다"},
+    {w:"expend", m:"소비하다, 쓰다"},
+    {w:"expire", m:"만료되다, 끝나다"},
+    {w:"explicit", m:"명백한, 노골적인"},
+    {w:"exploit", m:"개발하다, 착취하다"},
+    {w:"expound", m:"설명하다, 상술하다"},
+    {w:"expunge", m:"지우다, 삭제하다"},
+    {w:"extemporize", m:"즉흥적으로 하다"},
+    {w:"exterminate", m:"박멸하다"},
+    {w:"extinct", m:"멸종된, 사라진"},
+    {w:"extol", m:"칭찬하다, 격찬하다"},
+    {w:"extort", m:"강탈하다, 갈취하다"},
+    {w:"extricate", m:"탈출시키다"},
+    {w:"extrude", m:"밀어내다"},
+    {w:"exuberant", m:"활기 넘치는"},
+    {w:"exult", m:"기뻐 날뛰다"},
+    {w:"scourge", m:"재앙, 채찍질하다"},
+    {w:"limp", m:"절뚝거리다"},
+    {w:"limpid", m:"투명한, 맑은"},
+    {w:"lineage", m:"혈통, 계보"},
+    {w:"liquidate", m:"청산하다, 없애다"},
+    {w:"lithe", m:"유연한, 나긋나긋한"},
+    {w:"litigation", m:"소송, 기소"},
+    {w:"livid", m:"검푸른, 격노한"},
+    {w:"loathe", m:"혐오하다"},
+    {w:"loiter", m:"배회하다"},
+    {w:"longevity", m:"장수, 수명"},
+    {w:"loom", m:"어렴풋이 나타나다"},
+    {w:"loophole", m:"허점, 구멍"},
+    {w:"loquacious", m:"수다스러운"},
+    {w:"lubricant", m:"윤활제"},
+    {w:"lucid", m:"명쾌한, 맑은"},
+    {w:"lucrative", m:"수익성 있는, 유리한"},
+    {w:"ludicrous", m:"터무니없는, 웃기는"},
+    {w:"lugubrious", m:"슬픈, 침울한"},
+    {w:"lukewarm", m:"미지근한"},
+    {w:"luminous", m:"빛나는, 명료한"},
+    {w:"context", m:"문맥, 상황"},
+    {w:"contiguous", m:"인접한, 접촉하고 있는"},
+    {w:"contingent", m:"부수적인, ~에 달려있는"},
+    {w:"contort", m:"뒤틀다, 일그러뜨리다"},
+    {w:"contour", m:"윤곽, 외형"},
+    {w:"contrite", m:"회개하는, 깊이 뉘우치는"},
+    {w:"convene", m:"소집하다, 모이다"},
+    {w:"converse", m:"대화하다, 정반대의"},
+    {w:"convert", m:"전환하다, 개조하다"},
+    {w:"convict", m:"유죄를 선고하다"},
+    {w:"convivial", m:"명랑한, 즐거운"},
+    {w:"convoke", m:"소집하다"},
+    {w:"convoy", m:"호송하다"},
+    {w:"coordinate", m:"조정하다, 동등한"},
+    {w:"copious", m:"풍부한, 엄청난"},
+    {w:"correlate", m:"상관관계를 가지다"},
+    {w:"corroborate", m:"입증하다, 확증하다"},
+    {w:"fatuous", m:"어리석은, 얼빠진"},
+    {w:"fealty", m:"충성, 서약"},
+    {w:"feasible", m:"실행 가능한"},
+    {w:"fecund", m:"다산의, 비옥한"},
+    {w:"feign", m:"가장하다, ~인 척하다"},
+    {w:"felicitous", m:"적절한, 행복한"},
+    {w:"ferocious", m:"사나운, 잔인한"},
+    {w:"fervent", m:"열렬한, 뜨거운"},
+    {w:"fiasco", m:"대실패"},
+    {w:"fickle", m:"변덕스러운"},
+    {w:"fictitious", m:"허구의, 가공의"},
+    {w:"fidelity", m:"충실, 정절"},
+    {w:"filthy", m:"더러운, 불결한"},
+    {w:"finesse", m:"솜씨, 수완"},
+    {w:"finite", m:"한정된, 유한한"},
+    {w:"fiscal", m:"재정의"},
+    {w:"flagrant", m:"악명 높은, 노골적인"},
+    {w:"flamboyant", m:"화려한"},
+    {w:"flaunt", m:"과시하다, 자랑하다"},
+    {w:"fledgling", m:"풋내기, 초보자"},
+    {w:"contraband", m:"밀수품"},
+    {w:"contraception", m:"피임"},
+    {w:"contradict", m:"반박하다, 모순되다"},
+    {w:"contravene", m:"위반하다, 반대하다"},
+    {w:"controversial", m:"논란의 여지가 있는"},
+    {w:"counter", m:"반대하다, 반격하다"},
+    {w:"counteract", m:"중화하다"},
+    {w:"counterfeit", m:"위조하다, 가짜의"},
+    {w:"countermand", m:"취소하다, 철회하다"},
+    {w:"counterpart", m:"대응물"},
+    {w:"debase", m:"저하시키다"},
+    {w:"debauch", m:"타락시키다"},
+    {w:"debilitate", m:"약화시키다"},
+    {w:"deceased", m:"사망한"},
+    {w:"decipher", m:"판독하다, 해독하다"},
+    {w:"decompose", m:"분해하다, 부패하다"},
+    {w:"decoy", m:"미끼, 유혹하다"},
+    {w:"decrease", m:"감소하다"},
+    {w:"decrepit", m:"노후한, 노쇠한"},
+    {w:"deduce", m:"추론하다"},
+    {w:"defer", m:"연기하다, 경의를 표하다"},
+    {w:"fleeting", m:"순식간의, 덧없는"},
+    {w:"flexible", m:"유연한, 융통성 있는"},
+    {w:"flimsy", m:"얄팍한, 조잡한"},
+    {w:"flippant", m:"경박한, 무례한"},
+    {w:"flout", m:"조롱하다, 어기다"},
+    {w:"fluctuation", m:"변동, 동요"},
+    {w:"foible", m:"결점, 약점"},
+    {w:"foliage", m:"나뭇잎"},
+    {w:"foment", m:"선동하다, 조장하다"},
+    {w:"foolproof", m:"아주 쉬운, 확실한"},
+    {w:"forage", m:"찾아다니다, 사료"},
+    {w:"forge", m:"위조하다, 구축하다"},
+    {w:"formidable", m:"가공할, 어마어마한"},
+    {w:"formula", m:"공식, 방식"},
+    {w:"forte", m:"강점, 장점"},
+    {w:"forthright", m:"솔직한, 단도직입적인"},
+    {w:"fortify", m:"강화하다"},
+    {w:"fortitude", m:"인내, 불굴의 용기"},
+    {w:"fortuitous", m:"우연한, 행운의"},
+    {w:"foster", m:"육성하다, 촉진하다"},
+    {w:"defile", m:"더럽히다, 모독하다"},
+    {w:"defraud", m:"사취하다, 속여 빼앗다"},
+    {w:"defunct", m:"현존하지 않는, 죽은"},
+    {w:"degenerate", m:"타락하다, 퇴보하다"},
+    {w:"degrade", m:"저하시키다, 비하하다"},
+    {w:"dejected", m:"낙담한, 풀 죽은"},
+    {w:"delegate", m:"위임하다, 대표"},
+    {w:"deliberate", m:"의도적인, 신중한"},
+    {w:"delinquent", m:"범죄의, 태만한"},
+    {w:"delude", m:"속이다, 착각하게 하다"},
+    {w:"demeanor", m:"태도, 품행"},
+    {w:"demolish", m:"철거하다, 파괴하다"},
+    {w:"demonstrate", m:"증명하다, 시위하다"},
+    {w:"demur", m:"반대하다, 주저하다"},
+    {w:"demure", m:"얌전한, 조용한"},
+    {w:"denote", m:"나타내다, 의미하다"},
+    {w:"denounce", m:"비난하다, 고발하다"},
+    {w:"depict", m:"묘사하다, 그리다"},
+    {w:"deplete", m:"고갈시키다"},
+    {w:"deplore", m:"한탄하다, 비난하다"},
+    {w:"deport", m:"추방하다"},
+    {w:"depose", m:"물러나게 하다, 증언하다"},
+    {w:"deposit", m:"예금하다, 보증금"},
+    {w:"deprecate", m:"반대하다, 비하하다"},
+    {w:"depreciate", m:"가치가 떨어지다"},
+    {w:"depredate", m:"약탈하다, 파괴하다"},
+    {w:"fractious", m:"화를 잘 내는, 괴팍한"},
+    {w:"fragment", m:"조각, 파편"},
+    {w:"frail", m:"허약한, 깨지기 쉬운"},
+    {w:"fraternal", m:"형제의, 우애의"},
+    {w:"fraud", m:"사기, 속임수"},
+    {w:"fraught", m:"가득 찬, 걱정스러운"},
+    {w:"fray", m:"싸움, 소동"},
+    {w:"frenzied", m:"광분한, 열광적인"},
+    {w:"fret", m:"초조해하다, 고민하다"},
+    {w:"friction", m:"마찰, 갈등"},
+    {w:"frigid", m:"몹시 추운, 냉담한"},
+    {w:"frolicsome", m:"즐겁게 노는, 쾌활한"},
+    {w:"frugal", m:"절약하는, 검소한"},
+    {w:"frustrate", m:"좌절시키다"},
+    {w:"fulsome", m:"지나친, 아부하는"},
+    {w:"funereal", m:"장례의, 슬픈"},
+    {w:"furrow", m:"도랑, 주름"},
+    {w:"furtive", m:"은밀한, 엉큼한"},
+    {w:"fussy", m:"까다로운, 유난 떠는"},
+    {w:"gainsay", m:"부정하다, 반대하다"},
+    {w:"depress", m:"우울하게 하다"},
+    {w:"deputy", m:"대리인, 부관"},
+    {w:"deranged", m:"미친, 혼란된"},
+    {w:"derelict", m:"버려진, 태만한"},
+    {w:"deride", m:"조롱하다, 비웃다"},
+    {w:"derive", m:"유래하다, 끌어내다"},
+    {w:"descry", m:"발견하다, 알아보다"},
+    {w:"desiccate", m:"건조시키다"},
+    {w:"designate", m:"지정하다, 지명하다"},
+    {w:"desist", m:"그만두다, 중지하다"},
+    {w:"desolate", m:"적막한, 황량한"},
+    {w:"despise", m:"경멸하다"},
+    {w:"despondent", m:"낙담한, 실망한"},
+    {w:"destitute", m:"궁핍한, 극빈한"},
+    {w:"desuetude", m:"폐지, 사용 중지"},
+    {w:"desultory", m:"산만한, 종잡을 수 없는"},
+    {w:"detach", m:"분리하다, 떼어내다"},
+    {w:"detain", m:"구금하다, 지체시키다"},
+    {w:"deter", m:"단념시키다, 저지하다"},
+    {w:"deteriorate", m:"악화되다"},
+    {w:"detest", m:"혐오하다"},
+    {w:"detrimental", m:"해로운"},
+    {w:"devastate", m:"황폐화하다, 압도하다"},
+    {w:"deviate", m:"벗어나다, 일탈하다"},
+    {w:"devour", m:"게걸스럽게 먹다"},
+    {w:"devout", m:"독실한, 헌신적인"},
+    {w:"diminish", m:"줄이다, 감소하다"},
+    {w:"dismay", m:"당황하게 하다, 실망시키다"},
+    {w:"galvanize", m:"자극하다, 활기를 띠게 하다"},
+    {w:"gamut", m:"전 범위"},
+    {w:"gape", m:"입을 벌리고 바라보다"},
+    {w:"garner", m:"모으다, 얻다"},
+    {w:"garrulous", m:"수다스러운"},
+    {w:"generalize", m:"일반화하다"},
+    {w:"generic", m:"포괄적인, 일반적인"},
+    {w:"genetic", m:"유전의"},
+    {w:"genial", m:"친절한, 다정한"},
+    {w:"genteel", m:"품위 있는, 우아한"},
+    {w:"germane", m:"밀접한 관계가 있는"},
+    {w:"germinate", m:"싹트다, 시작되다"},
+    {w:"gesticulation", m:"몸짓, 제스처"},
+    {w:"ghastly", m:"무시무시한, 지독한"},
+    {w:"gingerly", m:"조심스럽게"},
+    {w:"gist", m:"요지, 골자"},
+    {w:"glib", m:"입담 좋은, 유창한"},
+    {w:"gloat", m:"흡족해하다, 고소해하다"},
+    {w:"glossy", m:"광택이 나는, 화려한"},
+    {w:"gluttonous", m:"게걸스러운, 탐욕스러운"},
+    {w:"deluge", m:"폭우, 쇄도"},
+    {w:"devoid", m:"~이 전혀 없는"},
+    {w:"diffident", m:"자신감 없는, 소심한"},
+    {w:"digress", m:"벗어나다, 지엽적으로 흐르다"},
+    {w:"dilapidated", m:"황폐한, 낡아빠진"},
+    {w:"dilate", m:"팽창시키다, 넓히다"},
+    {w:"dilatory", m:"지체하는, 느린"},
+    {w:"dilute", m:"희석하다, 약화시키다"},
+    {w:"dimension", m:"치수, 규모, 차원"},
+    {w:"disable", m:"무능하게 하다"},
+    {w:"disband", m:"해산하다"},
+    {w:"discard", m:"버리다, 폐기하다"},
+    {w:"disciple", m:"제자, 문하생"},
+    {w:"disconcert", m:"당황하게 하다"},
+    {w:"discord", m:"불화, 불일치"},
+    {w:"discourse", m:"담론, 강연"},
+    {w:"discredit", m:"신용을 떨어뜨리다"},
+    {w:"discreet", m:"신중한, 조심스러운"},
+    {w:"discrepancy", m:"불일치, 차이"},
+    {w:"discrete", m:"별개의, 분리된"},
+    {w:"discriminate", m:"차별하다, 식별하다"},
+    {w:"disdain", m:"경멸하다, 거부하다"},
+    {w:"disentangle", m:"풀어주다, 해방시키다"},
+    {w:"disfigure", m:"외관을 손상시키다"},
+    {w:"dishearten", m:"낙담시키다"},
+    {w:"disillusion", m:"환상을 깨뜨리다"},
+    {w:"disinterested", m:"객관적인, 사심 없는"},
+    {w:"disorient", m:"방향을 잃게 하다"},
+    {w:"goad", m:"자극하다, 선동하다"},
+    {w:"gorge", m:"게걸스럽게 먹다"},
+    {w:"gorgeous", m:"아주 멋진, 화려한"},
+    {w:"gossamer", m:"가볍고 얇은"},
+    {w:"grandeur", m:"장엄함, 위엄"},
+    {w:"grandiloquent", m:"말이 거창한, 호언장담하는"},
+    {w:"grandiose", m:"웅장한, 거들먹거리는"},
+    {w:"graphic", m:"생생한, 도표의"},
+    {w:"gratify", m:"만족시키다, 기쁘게 하다"},
+    {w:"gratuitous", m:"무료의, 불필요한"},
+    {w:"gregarious", m:"사교적인, 군집성의"},
+    {w:"grisly", m:"소름 끼치는"},
+    {w:"grouchy", m:"불평이 많은, 잘 투덜거리는"},
+    {w:"grudge", m:"원한, 아까워하다"},
+    {w:"grueling", m:"엄청나게 힘든"},
+    {w:"gruesome", m:"섬뜩한, 소름끼치는"},
+    {w:"gruff", m:"거친, 퉁명스러운"},
+    {w:"guile", m:"속임수, 교활함"},
+    {w:"gullible", m:"잘 속는"},
+    {w:"habitable", m:"거주 가능한"},
+    {w:"disparage", m:"비하하다, 폄하하다"},
+    {w:"disparity", m:"차이, 불균형"},
+    {w:"dispatch", m:"파견하다, 신속히 처리하다"},
+    {w:"dispel", m:"떨쳐버리다, 없애다"},
+    {w:"dispense", m:"나누어 주다, 조제하다"},
+    {w:"disperse", m:"흩어지다, 해산시키다"},
+    {w:"displace", m:"대체하다, 쫓아내다"},
+    {w:"dispose", m:"배치하다, 처리하다"},
+    {w:"disproportionate", m:"불균형의, 너무 큰"},
+    {w:"disregard", m:"무시하다"},
+    {w:"disrupt", m:"방해하다, 중단시키다"},
+    {w:"dissect", m:"해부하다, 분석하다"},
+    {w:"dissemble", m:"가장하다, 숨기다"},
+    {w:"disseminate", m:"퍼뜨리다, 전파하다"},
+    {w:"dissent", m:"반대하다, 의견을 달리하다"},
+    {w:"dissipate", m:"낭비하다, 소멸되다"},
+    {w:"dissuade", m:"단념시키다"},
+    {w:"distort", m:"왜곡하다"},
+    {w:"distract", m:"산만하게 하다"},
+    {w:"distress", m:"고통, 괴롭히다"},
+    {w:"diverge", m:"갈라지다, 이탈하다"},
+    {w:"diverse", m:"다양한"},
+    {w:"divulge", m:"누설하다, 밝히다"},
+    {w:"hackneyed", m:"진부한, 진부한 문구"},
+    {w:"intimate", m:"암시하다, 친밀한"},
+    {w:"intimidate", m:"겁주다, 협박하다"},
+    {w:"intoxicate", m:"취하게 하다"},
+    {w:"intricate", m:"복잡한"},
+    {w:"intrigue", m:"흥미를 끌다, 음모"},
+    {w:"intrude", m:"침범하다, 방해하다"},
+    {w:"intuition", m:"직관"},
+    {w:"inundate", m:"범람시키다, 쇄도하다"},
+    {w:"invert", m:"뒤집다, 거꾸로 하다"},
+    {w:"irrigate", m:"관개하다, 물을 대다"},
+    {w:"optimistic", m:"낙관적인"},
+    {w:"opulent", m:"부유한, 풍성한"},
+    {w:"ordeal", m:"시련, 고난"},
+    {w:"ordinance", m:"법령, 조례"},
+    {w:"ornate", m:"화려하게 장식된"},
+    {w:"ostracize", m:"추방하다, 배척하다"},
+    {w:"ovation", m:"박수갈채"},
+    {w:"overt", m:"명백한, 공공연한"},
+    {w:"painstaking", m:"공들인, 힘든"},
+    {w:"palatable", m:"맛있는, 구미에 맞는"},
+    {w:"palliate", m:"완화시키다"},
+    {w:"pallid", m:"창백한"},
+    {w:"palpable", m:"뚜렷한, 만질 수 있는"},
+    {w:"paltry", m:"보잘것없는, 쥐꼬리만한"},
+    {w:"parity", m:"동등, 평등"},
+    {w:"parsimonious", m:"인색한"},
+    {w:"partial", m:"편파적인, 부분적인"},
+    {w:"pastoral", m:"전원의, 목가적인"},
+    {w:"patent", m:"특허, 명백한"},
+    {w:"paterfamilias", m:"가장, 세대주"},
+    {w:"entertain", m:"즐겁게 하다, 대접하다"},
+    {w:"intercept", m:"가로채다"},
+    {w:"interchange", m:"교환하다"},
+    {w:"interdict", m:"금지하다"},
+    {w:"interim", m:"임시의, 중간의"},
+    {w:"interject", m:"말참견하다, 불쑥 끼워넣다"},
+    {w:"intermediate", m:"중간의"},
+    {w:"intermission", m:"휴식 시간"},
+    {w:"interrogate", m:"심문하다"},
+    {w:"interrupt", m:"방해하다, 중단시키다"},
+    {w:"intersect", m:"교차하다"},
+    {w:"interstice", m:"틈새"},
+    {w:"maladroit", m:"서투른"},
+    {w:"malady", m:"질병"},
+    {w:"malediction", m:"저주, 악담"},
+    {w:"malefactor", m:"악인, 범인"},
+    {w:"malevolent", m:"악의 있는"},
+    {w:"malice", m:"악의, 원한"},
+    {w:"malign", m:"비방하다, 해로운"},
+    {w:"malinger", m:"꾀병을 부리다"},
+    {w:"miscarry", m:"실패하다, 유산하다"},
+    {w:"misdemeanor", m:"경범죄, 행실 나쁨"},
+    {w:"misgiving", m:"걱정, 불안"},
+    {w:"mishap", m:"사하고, 불운"},
+    {w:"mislead", m:"오도하다, 속이다"},
+    {w:"misuse", m:"오용하다, 학대하다"},
+    {w:"pathetic", m:"애처로운, 한심한"},
+    {w:"pathetical", m:"감상적인"},
+    {w:"patriarch", m:"가장, 족장"},
+    {w:"patron", m:"후원자, 단골"},
+    {w:"pecuniary", m:"금전상의"},
+    {w:"pedagogue", m:"교사, 교육자"},
+    {w:"pedantic", m:"현학적인, 아는 체하는"},
+    {w:"peerless", m:"비길 데 없는"},
+    {w:"penal", m:"형벌의"},
+    {w:"penance", m:"참회, 고행"},
+    {w:"penchant", m:"성향, 기호"},
+    {w:"penitent", m:"참회하는"},
+    {w:"pension", m:"연금"},
+    {w:"pensive", m:"생각에 잠긴"},
+    {w:"penurious", m:"가난한, 인색한"},
+    {w:"pessimistic", m:"비관적인"},
+    {w:"petrify", m:"굳게 하다, 겁에 질리게 하다"},
+    {w:"petulant", m:"화잘내는, 까다로운"},
+    {w:"philanthropist", m:"박애주의자"},
+    {w:"phlegmatic", m:"냉담한, 침착한"},
+    {w:"phony", m:"가짜의, 허풍쟁이"},
+    {w:"hostage", m:"인질"},
+    {w:"obdurate", m:"고집 센, 냉혹한"},
+    {w:"obese", m:"비만인"},
+    {w:"oblige", m:"강요하다, 고맙게 여기게 하다"},
+    {w:"oblique", m:"완곡한, 비스듬한"},
+    {w:"obliterate", m:"지우다, 말살하다"},
+    {w:"oblivion", m:"망각, 잊혀짐"},
+    {w:"oblong", m:"직사각형의"},
+    {w:"obloquy", m:"불명예, 비난"},
+    {w:"obnoxious", m:"불쾌한, 아주 싫은"},
+    {w:"obscene", m:"음란한, 외설적인"},
+    {w:"obsequious", m:"아첨하는"},
+    {w:"obsess", m:"사로잡다, 강박감을 갖다"},
+    {w:"obsolete", m:"구식의, 쓸모없게 된"},
+    {w:"obstinate", m:"고집 센"},
+    {w:"obstruct", m:"방해하다"},
+    {w:"obtrude", m:"강요하다, 참견하다"},
+    {w:"obtuse", m:"둔한, 무딘"},
+    {w:"obviate", m:"제거하다, 미연에 방지하다"},
+    {w:"occidental", m:"서양의"},
+    {w:"occult", m:"비밀의, 신비로운"},
+    {w:"opponent", m:"상대, 반대자"},
+    {w:"opportune", m:"적절한 시기의"},
+    {w:"ostensible", m:"표면상의"},
+    {w:"ostentatious", m:"과시하는, 화려한"},
+    {w:"physiologist", m:"생리학자"},
+    {w:"pillage", m:"약탈하다"},
+    {w:"pinnacle", m:"정점, 절정"},
+    {w:"pious", m:"경건한, 독실한"},
+    {w:"piquant", m:"톡 쏘는, 짜릿한"},
+    {w:"pithy", m:"간결한, 핵심을 찌르는"},
+    {w:"placate", m:"달래다, 진정시키다"},
+    {w:"placid", m:"평온한, 침착한"},
+    {w:"plagiarism", m:"표절"},
+    {w:"plaintive", m:"구슬픈, 애처로운"},
+    {w:"platitude", m:"진부한 말, 상투어"},
+    {w:"plaudit", m:"칭찬, 박수"},
+    {w:"plausible", m:"그럴듯한"},
+    {w:"plebeian", m:"평민의, 저속한"},
+    {w:"plenary", m:"완전한, 전원 출석의"},
+    {w:"plethora", m:"과다, 과잉"},
+    {w:"pliant", m:"유연한, 고분고분한"},
+    {w:"plumb", m:"똑바른, 수직의"},
+    {w:"plump", m:"통통한, 포동포동한"},
+    {w:"poignant", m:"가슴 아픈, 신랄한"},
+    {w:"overall", m:"전부의, 전체적인"},
+    {w:"overbearing", m:"거만한, 압도적인"},
+    {w:"overcast", m:"흐린, 어두운"},
+    {w:"overcrowd", m:"너무 많이 모여들다"},
+    {w:"overdue", m:"기한이 지난"},
+    {w:"overhang", m:"돌출하다, 걸쳐 있다"},
+    {w:"overhaul", m:"철저히 조사하다"},
+    {w:"overhear", m:"엿듣다"},
+    {w:"overland", m:"육로의"},
+    {w:"overlap", m:"겹치다"},
+    {w:"overload", m:"과적하다, 짐을 너무 많이 싣다"},
+    {w:"overlook", m:"내려다보다, 간과하다"},
+    {w:"overnight", m:"하룻밤 사이의"},
+    {w:"overpower", m:"제압하다, 압도하다"},
+    {w:"override", m:"무시하다, 우선하다"},
+    {w:"overrun", m:"만연하다, 초과하다"},
+    {w:"overseas", m:"해외의"},
+    {w:"overtime", m:"시간 외 근무"},
+    {w:"overweight", m:"과체중의"},
+    {w:"overwhelm", m:"압도하다, 당황하게 하다"},
+    {w:"poisonous", m:"독이 있는"},
+    {w:"polemic", m:"논쟁, 반론"},
+    {w:"politic", m:"현명한, 정치적인"},
+    {w:"potable", m:"마실 수 있는"},
+    {w:"pragmatic", m:"실용적인"},
+    {w:"precarious", m:"불안정한, 위태로운"},
+    {w:"prime", m:"최고의, 주요한"},
+    {w:"pristine", m:"원래의, 오염되지 않은"},
+    {w:"privatize", m:"민영화하다"},
+    {w:"probity", m:"정직, 고결"},
+    {w:"prone", m:"~하기 쉬운, 엎드린"},
+    {w:"prowess", m:"용기, 뛰어난 솜씨"},
+    {w:"proximity", m:"근접, 가까움"},
+    {w:"proxy", m:"대리, 대리인"},
+    {w:"prying", m:"캐묻기 좋아하는"},
+    {w:"pseudonym", m:"필명, 가명"},
+    {w:"psychiatrist", m:"정신과 의사"},
+    {w:"pugnacious", m:"호전적인"},
+    {w:"punctilious", m:"꼼꼼한, 세심한"},
+    {w:"punctuate", m:"중단시키다, 강조하다"},
+    {w:"out-of-date", m:"구식의"},
+    {w:"outburst", m:"폭발, 분출"},
+    {w:"outcry", m:"항의, 부르짖음"},
+    {w:"outdo", m:"능가하다"},
+    {w:"outgoing", m:"사교적인, 떠나가는"},
+    {w:"outlaw", m:"불법화하다, 금지하다"},
+    {w:"outlay", m:"지출, 경비"},
+    {w:"outlive", m:"~보다 오래 살다"},
+    {w:"outrageous", m:"잔인무도한, 터무니없는"},
+    {w:"outright", m:"즉각적인, 명백한"},
+    {w:"outrun", m:"~보다 빨리 달리다"},
+    {w:"outset", m:"착수, 시작"},
+    {w:"outskirt", m:"변두리, 교외"},
+    {w:"outspoken", m:"거침없이 말하는"},
+    {w:"outstretched", m:"펼쳐진, 뻗친"},
+    {w:"outweigh", m:"~보다 중요하다"},
+    {w:"parable", m:"우화"},
+    {w:"paradigm", m:"전형, 패러다임"},
+    {w:"paradox", m:"역설, 모순"},
+    {w:"paralysis", m:"마비"},
+    {w:"paramount", m:"최고의, 주요한"},
+    {w:"paraphrase", m:"바꿔 말하다"},
+    {w:"pundit", m:"권위자, 박식한 사람"},
+    {w:"pungent", m:"톡 쏘는, 날카로운"},
+    {w:"purge", m:"숙청하다, 깨끗이 하다"},
+    {w:"putative", m:"추정되는"},
+    {w:"quack", m:"돌팔이 의사"},
+    {w:"qualm", m:"양심의 가책, 불안"},
+    {w:"quandary", m:"진퇴양난, 당혹"},
+    {w:"quarterly", m:"연 4회 발행의"},
+    {w:"quell", m:"진압하다, 억누르다"},
+    {w:"querulous", m:"불평이 많은"},
+    {w:"quintessence", m:"정수, 전형"},
+    {w:"quixotic", m:"공상적인, 돈키호테 같은"},
+    {w:"ramification", m:"분기, 결과"},
+    {w:"rancid", m:"불쾌한 맛이 나는, 악취 나는"},
+    {w:"rancor", m:"원한, 악의"},
+    {w:"ransack", m:"뒤지다, 약탈하다"},
+    {w:"rapacious", m:"탐욕스러운"},
+    {w:"rational", m:"합리적인"},
+    {w:"raucous", m:"귀에 거슬리는"},
+    {w:"ravage", m:"파괴하다, 황폐화하다"},
+    {w:"enmity", m:"적대감, 증오"},
+    {w:"ignoble", m:"비열한, 천한"},
+    {w:"ignominious", m:"불명예스러운"},
+    {w:"illegible", m:"읽기 어려운"},
+    {w:"illegitimate", m:"불법의, 서출의"},
+    {w:"illicit", m:"불법의, 금지된"},
+    {w:"illiterate", m:"문맹의"},
+    {w:"immaculate", m:"결점 없는, 깨끗한"},
+    {w:"immature", m:"미숙한"},
+    {w:"immemorial", m:"태고의, 먼 옛날의"},
+    {w:"immortal", m:"불멸의"},
+    {w:"immune", m:"면역의, 면제된"},
+    {w:"impartial", m:"공정한, 치우치지 않는"},
+    {w:"impassive", m:"무표정한, 냉담한"},
+    {w:"impecunious", m:"무일푼의, 가난한"},
+    {w:"imperceptible", m:"감지할 수 없는"},
+    {w:"impertinent", m:"무례한, 상관없는"},
+    {w:"impious", m:"불경한"},
+    {w:"impotent", m:"무력한"},
+    {w:"impracticable", m:"실행 불가능한"},
+    {w:"impregnable", m:"난공불락의"},
+    {w:"improbable", m:"있을 법하지 않은"},
+    {w:"improper", m:"부적절한"},
+    {w:"improvise", m:"즉석에서 하다"},
+    {w:"imprudent", m:"경솔한"},
+    {w:"impudent", m:"뻔뻔스러운, 무례한"},
+    {w:"luscious", m:"맛좋은, 감미로운"},
+    {w:"luster", m:"광택, 영광"},
+    {w:"luxuriant", m:"번성하는, 풍부한"},
+    {w:"maelstrom", m:"대혼란, 소용돌이"},
+    {w:"magnanimous", m:"관대한, 도량이 넓은"},
+    {w:"magnitude", m:"중요성, 규모"},
+    {w:"maim", m:"불구로 만들다"},
+    {w:"makeshift", m:"임시변통의"},
+    {w:"mammoth", m:"거대한"},
+    {w:"mandatory", m:"의무적인"},
+    {w:"maneuver", m:"조종하다, 책략"},
+    {w:"manifest", m:"명백한, 나타나다"},
+    {w:"manipulate", m:"조종하다, 조작하다"},
+    {w:"manuscript", m:"원고"},
+    {w:"maritime", m:"바다의, 해상의"},
+    {w:"martial", m:"전쟁의, 군대의"},
+    {w:"maternal", m:"어머니의"},
+    {w:"maudlin", m:"감상적인"},
+    {w:"maul", m:"거칠게 다루다, 혹평하다"},
+    {w:"mauve", m:"연보라색"},
+    {w:"impunity", m:"처벌 면제"},
+    {w:"inaccessible", m:"접근하기 어려운"},
+    {w:"inadvertent", m:"부주의한, 우연한"},
+    {w:"inanimate", m:"생명 없는, 무생물의"},
+    {w:"inappropriate", m:"부적절한"},
+    {w:"inarticulate", m:"불분명한, 말을 못하는"},
+    {w:"incalculable", m:"무수한, 헤아릴 수 없는"},
+    {w:"incessant", m:"끊임없는"},
+    {w:"inclement", m:"혹독한, 궂은"},
+    {w:"incognito", m:"익명의, 가명으로"},
+    {w:"incomparable", m:"비길 데 없는"},
+    {w:"incompatible", m:"양립할 수 없는"},
+    {w:"incompetent", m:"무능한"},
+    {w:"incomprehensible", m:"이해할 수 없는"},
+    {w:"inconceivable", m:"상상할 수 없는"},
+    {w:"incongruous", m:"조화롭지 않은"},
+    {w:"inconsistent", m:"일관성 없는"},
+    {w:"incredible", m:"믿을 수 없는"},
+    {w:"incredulous", m:"의심 많은, 잘 안 믿는"},
+    {w:"indemnify", m:"보상하다, 보호하다"},
+    {w:"indescribable", m:"형언할 수 없는"},
+    {w:"indignant", m:"분개한"},
+    {w:"indiscreet", m:"무분별한, 경솔한"},
+    {w:"indiscriminate", m:"무차별적인"},
+    {w:"indolent", m:"게으른, 나태한"},
+    {w:"indomitable", m:"불굴의"},
+    {w:"inert", m:"비활성의, 움직이지 않는"},
+    {w:"inexorable", m:"냉혹한, 거침없는"},
+    {w:"inextricable", m:"탈출할 수 없는"},
+    {w:"infallible", m:"실수가 없는, 확실한"},
+    {w:"infamous", m:"악명 높은"},
+    {w:"infinitesimal", m:"극소의"},
+    {w:"maxim", m:"격언, 금언"},
+    {w:"maze", m:"미로, 당황하게 하다"},
+    {w:"meander", m:"배회하다, 굽이치다"},
+    {w:"meddle", m:"간섭하다, 참견하다"},
+    {w:"mediate", m:"중재하다"},
+    {w:"mediocre", m:"평범한, 2류의"},
+    {w:"meditation", m:"명상"},
+    {w:"memento", m:"기념품"},
+    {w:"mendacious", m:"거짓의, 허위의"},
+    {w:"mendicant", m:"구걸하는, 거지"},
+    {w:"menial", m:"천한, 하인"},
+    {w:"mercenary", m:"용병, 돈을 목적으로 하는"},
+    {w:"mercurial", m:"변덕스러운, 활발한"},
+    {w:"mesmerize", m:"매료시키다, 최면을 걸다"},
+    {w:"mete", m:"할당하다, 주다"},
+    {w:"meticulous", m:"꼼꼼한, 세심한"},
+    {w:"mettle", m:"용기, 기개"},
+    {w:"mien", m:"태도, 풍채"},
+    {w:"migrant", m:"이주자"},
+    {w:"milestone", m:"이정표, 획기적 사건"},
+    {w:"infirm", m:"허약한, 병든"},
+    {w:"inhospitable", m:"불친절한, 황량한"},
+    {w:"iniquitous", m:"사악한, 부정한"},
+    {w:"innumerable", m:"무수한"},
+    {w:"inordinate", m:"과도한, 지나친"},
+    {w:"insensible", m:"무감각한, 의식을 잃은"},
+    {w:"inseparable", m:"분리할 수 없는"},
+    {w:"insipid", m:"맛없는, 재미없는"},
+    {w:"insolent", m:"무례한, 거만한"},
+    {w:"insolvent", m:"파산한"},
+    {w:"intangible", m:"무형의, 막연한"},
+    {w:"integral", m:"필수적인, 완전한"},
+    {w:"integrate", m:"통합하다"},
+    {w:"integrity", m:"정직, 고결, 완전함"},
+    {w:"intrepid", m:"용맹한"},
+    {w:"invaluable", m:"귀중한"},
+    {w:"invariable", m:"변함없는"},
+    {w:"invincible", m:"무적의"},
+    {w:"involuntary", m:"비자발적인, 무의식적인"},
+    {w:"irrational", m:"비이성적인"},
+    {w:"irrelevant", m:"관련 없는"},
+    {w:"irreparable", m:"회복할 수 없는"},
+    {w:"irresistible", m:"저항할 수 없는"},
+    {w:"irresolute", m:"결단력 없는"},
+    {w:"irrevocable", m:"취소할 수 없는"},
+    {w:"millennium", m:"천년"},
+    {w:"minuscule", m:"아주 작은"},
+    {w:"miserly", m:"인색한"},
+    {w:"mitigate", m:"완화하다, 경감하다"},
+    {w:"mobile", m:"이동하는, 유동적인"},
+    {w:"mode", m:"방식, 유행"},
+    {w:"moderate", m:"적당한, 온건한"},
+    {w:"moist", m:"습한, 촉촉한"},
+    {w:"mollify", m:"달래다, 진정시키다"},
+    {w:"momentous", m:"중대한"},
+    {w:"monetary", m:"금융의, 화폐의"},
+    {w:"monumental", m:"기념비적인, 엄청난"},
+    {w:"morbid", m:"병적인, 소름끼치는"},
+    {w:"mordant", m:"신랄한, 부식성의"},
+    {w:"moribund", m:"죽어가는, 소멸해가는"},
+    {w:"morose", m:"침울한, 시무룩한"},
+    {w:"mortician", m:"장의사"},
+    {w:"mortify", m:"굴욕감을 주다, 억제하다"},
+    {w:"motif", m:"주제, 동기"},
+    {w:"muddle", m:"혼란스럽게 하다"},
+    {w:"ambush", m:"매복, 습격하다"},
+    {w:"illuminate", m:"비추다, 설명하다"},
+    {w:"illustrate", m:"설명하다, 삽화를 넣다"},
+    {w:"imbibe", m:"흡수하다, 마시다"},
+    {w:"immerse", m:"몰두시키다, 담그다"},
+    {w:"immigrate", m:"이주해오다"},
+    {w:"imminent", m:"임박한"},
+    {w:"impact", m:"영향, 충격"},
+    {w:"impair", m:"손상시키다, 약화시키다"},
+    {w:"impart", m:"알리다, 주다"},
+    {w:"impassioned", m:"열정적인"},
+    {w:"impeach", m:"탄핵하다, 비난하다"},
+    {w:"impede", m:"방해하다"},
+    {w:"impel", m:"재촉하다, 추진하다"},
+    {w:"impending", m:"임박한"},
+    {w:"imperative", m:"필수적인, 명령"},
+    {w:"impetuous", m:"성급한, 충동적인"},
+    {w:"implant", m:"심다, 주입하다"},
+    {w:"implement", m:"실행하다, 도구"},
+    {w:"implicate", m:"연루시키다, 암시하다"},
+    {w:"implicit", m:"암시된, 절대적인"},
+    {w:"implore", m:"애원하다, 간청하다"},
+    {w:"impose", m:"부과하다, 강요하다"},
+    {w:"impoverish", m:"가난하게 하다"},
+    {w:"impromptu", m:"즉흥적인"},
+    {w:"impute", m:"~의 탓으로 돌리다"},
+    {w:"inaugurate", m:"취임시키다, 시작하다"},
+    {w:"inborn", m:"타고난"},
+    {w:"incandescent", m:"빛나는, 열렬한"},
+    {w:"incarnate", m:"구체화하다, 육신을 입은"},
+    {w:"muggy", m:"무더운, 후덥지근한"},
+    {w:"multiracial", m:"다인종의"},
+    {w:"mumble", m:"중얼거리다"},
+    {w:"mundane", m:"세속적인, 평범한"},
+    {w:"munificent", m:"아낌없이 주는, 후한"},
+    {w:"muse", m:"명상하다, 생각에 잠기다"},
+    {w:"mushroom", m:"급격히 퍼지다"},
+    {w:"mutable", m:"변하기 쉬운"},
+    {w:"mutilate", m:"불구로 만들다, 훼손하다"},
+    {w:"myriad", m:"무수한"},
+    {w:"myth", m:"신화, 근거 없는 믿음"},
+    {w:"nadir", m:"최하점, 밑바닥"},
+    {w:"naive", m:"순진한, 소박한"},
+    {w:"narrative", m:"이야기, 서술"},
+    {w:"nascent", m:"초기의, 발생기의"},
+    {w:"nauseate", m:"역겹게 하다"},
+    {w:"nebulous", m:"막연한, 흐릿한"},
+    {w:"nefarious", m:"사악한"},
+    {w:"negligent", m:"태만한, 부주의한"},
+    {w:"nepotism", m:"친족 등용"},
+    {w:"incense", m:"화나게 하다, 향"},
+    {w:"incentive", m:"동기, 장려책"},
+    {w:"incipient", m:"초기의, 발생기의"},
+    {w:"incite", m:"선동하다, 자극하다"},
+    {w:"incorporate", m:"통합하다, 법인으로 만들다"},
+    {w:"incumbent", m:"재임 중인, 의무적인"},
+    {w:"indent", m:"톱니 모양을 내다"},
+    {w:"indigenous", m:"원주민의, 고유한"},
+    {w:"indigent", m:"가난한"},
+    {w:"induce", m:"유도하다, 설득하다"},
+    {w:"indulge", m:"탐닉하다, 마음껏 하다"},
+    {w:"infer", m:"추론하다"},
+    {w:"inflate", m:"팽창시키다, 부풀리다"},
+    {w:"inflict", m:"가하다, 괴롭히다"},
+    {w:"infringe", m:"위반하다, 침해하다"},
+    {w:"infuriate", m:"화나게 하다"},
+    {w:"infuse", m:"주입하다, 불어넣다"},
+    {w:"ingenious", m:"영리한, 독창적인"},
+    {w:"ingenuous", m:"순진한, 솔직한"},
+    {w:"ingrained", m:"깊이 박힌, 철저한"},
+    {w:"ingratiate", m:"환심을 사다"},
+    {w:"ingredient", m:"성분, 재료"},
+    {w:"inhale", m:"숨을 들이마시다"},
+    {w:"niggardly", m:"인색한"},
+    {w:"nitty-gritty", m:"핵심, 요체"},
+    {w:"nocturnal", m:"야행성의"},
+    {w:"nomadic", m:"유목의, 방랑하는"},
+    {w:"nostalgia", m:"향수, 그리움"},
+    {w:"nosy", m:"참견하기 좋아하는"},
+    {w:"notorious", m:"악명 높은"},
+    {w:"novice", m:"초보자"},
+    {w:"noxious", m:"해로운, 유독한"},
+    {w:"numerical", m:"수의, 수적인"},
+    {w:"nurture", m:"양육하다, 육성하다"},
+    {w:"odious", m:"혐오스러운"},
+    {w:"officious", m:"참견하기 좋아하는"},
+    {w:"offspring", m:"자식, 자손"},
+    {w:"ominous", m:"불길한"},
+    {w:"onerous", m:"성가신, 부담스러운"},
+    {w:"ooze", m:"새어나오다"},
+    {w:"opaque", m:"불투명한, 불분명한"},
+    {w:"ophthalmologist", m:"안과 의사"},
+    {w:"opt", m:"선택하다"},
+    {w:"opt for", m:"~을 선택하다"},
+    {w:"inherent", m:"타고난, 고유한"},
+    {w:"inherit", m:"상속하다, 물려받다"},
+    {w:"inhibit", m:"억제하다, 방해하다"},
+    {w:"inject", m:"주사하다, 주입하다"},
+    {w:"inmate", m:"수감자, 입원 환자"},
+    {w:"innate", m:"타고난, 천성적인"},
+    {w:"innovate", m:"혁신하다"},
+    {w:"innuendo", m:"빗댐, 빈정거림"},
+    {w:"inoculate", m:"접종하다"},
+    {w:"inscribe", m:"적다, 새기다"},
+    {w:"insidious", m:"교활한, 음흉한"},
+    {w:"insinuate", m:"암시하다, 넌지시 말하다"},
+    {w:"inspect", m:"조사하다, 사찰하다"},
+    {w:"inspire", m:"영감을 주다, 고취하다"},
+    {w:"install", m:"설치하다"},
+    {w:"instigate", m:"부추기다, 선동하다"},
+    {w:"insurrection", m:"반란, 폭동"},
+    {w:"intensify", m:"강화하다, 증대하다"},
+    {w:"squeeze", m:"짜내다, 압착하다"},
+    {w:"staggering", m:"충격적인, 믿기 어려운"},
+    {w:"stagnant", m:"정체된, 고여있는"},
+    {w:"standstill", m:"정지, 멈춤"},
+    {w:"stark", m:"완전한, 삭막한"},
+    {w:"statute", m:"법령, 법규"},
+    {w:"stereotype", m:"고정 관념"},
+    {w:"stifling", m:"숨 막히는, 답답한"},
+    {w:"stigmatize", m:"오명을 씌우다"},
+    {w:"stingy", m:"인색한, 인색하게 구는"},
+    {w:"stolid", m:"둔감한, 무신경한"},
+    {w:"streamline", m:"간소화하다, 능률화하다"},
+    {w:"strident", m:"귀에 거슬리는, 소란스러운"},
+    {w:"stringent", m:"엄격한, 긴박한"},
+    {w:"stumble", m:"비틀거리다, 실수하다"},
+    {w:"sturdy", m:"튼튼한, 견고한"},
+    {w:"succulent", m:"즙이 많은, 흥미로운"},
+    {w:"sullen", m:"뚱한, 시무룩한"},
+    {w:"sultry", m:"무더운, 후덥지근한"},
+    {w:"seclude", m:"격리하다, 은둔시키다"},
+    {w:"sedition", m:"선동, 반란"},
+    {w:"seduce", m:"유혹하다, 부추기다"},
+    {w:"segregate", m:"차별하다, 격리하다"},
+    {w:"sever", m:"끊다, 절단하다"},
+    {w:"sojourn", m:"체류하다"},
+    {w:"somber", m:"어두운, 우울한"},
+    {w:"subjugate", m:"정복하다, 복종시키다"},
+    {w:"submerge", m:"잠수하다, 담그다"},
+    {w:"subordinate", m:"종속시키다, 하급의"},
+    {w:"subscribe", m:"구독하다, 기부하다"},
+    {w:"subsequent", m:"그 다음의, 차후의"},
+    {w:"subside", m:"가라앉다, 진정되다"},
+    {w:"subsidiary", m:"보조의, 부수적인"},
+    {w:"subsist", m:"생존하다, 살아가다"},
+    {w:"substantiate", m:"입증하다, 구체화하다"},
+    {w:"subtract", m:"빼다, 공제하다"},
+    {w:"subvert", m:"전복시키다, 파괴하다"},
+    {w:"succumb", m:"굴복하다, 쓰러지다"},
+    {w:"suffocate", m:"질식시키다"},
+    {w:"suffrage", m:"투표권, 참정권"},
+    {w:"supple", m:"유연한, 고분고분한"},
+    {w:"supplement", m:"보충하다, 추가"},
+    {w:"supplicate", m:"간청하다, 애원하다"},
+    {w:"surge", m:"급증하다, 파도치다"},
+    {w:"surreptitious", m:"은밀한, 슬쩍 하는"},
+    {w:"surrogate", m:"대리의, 대행자"},
+    {w:"susceptible", m:"영향받기 쉬운, 민감한"},
+    {w:"sumptuous", m:"호화로운, 사치스러운"},
+    {w:"sundry", m:"잡다한, 여러 가지의"},
+    {w:"surly", m:"무뚝뚝한, 퉁명스러운"},
+    {w:"swallow", m:"삼키다, 억제하다"},
+    {w:"swamp", m:"늪, 압도하다"},
+    {w:"sway", m:"흔들리다, 영향력을 행사하다"},
+    {w:"swindle", m:"사기 치다, 편취하다"},
+    {w:"tacit", m:"암묵적인, 무언의"},
+    {w:"taciturn", m:"말수가 적은, 무뚝뚝한"},
+    {w:"tackle", m:"다루다, 달려들다"},
+    {w:"tactful", m:"재치 있는, 기지 있는"},
+    {w:"tactile", m:"촉각의, 촉감의"},
+    {w:"tainted", m:"부패한, 오염된"},
+    {w:"tamper", m:"참견하다, 함부로 변경하다"},
+    {w:"tantalize", m:"감질나게 하다"},
+    {w:"tantamount", m:"동등한, ~와 마찬가지의"},
+    {w:"tarnish", m:"흐리게 하다, 변색시키다"},
+    {w:"tarry", m:"지체하다, 꾸물거리다"},
+    {w:"tease", m:"괴롭히다, 집적거리다"},
+    {w:"tedium", m:"지루함, 권태"},
+    {w:"superb", m:"최고의, 훌륭한"},
+    {w:"superfluous", m:"불필요한, 과잉의"},
+    {w:"superintend", m:"감독하다, 관리하다"},
+    {w:"superlative", m:"최상의, 최고의"},
+    {w:"supernatural", m:"초자연적인"},
+    {w:"supersede", m:"대신하다, 대체하다"},
+    {w:"supervise", m:"감독하다, 관리하다"},
+    {w:"surfeit", m:"과도, 폭식"},
+    {w:"surmise", m:"추측하다, 짐작하다"},
+    {w:"surmount", m:"극복하다, 이겨내다"},
+    {w:"surpass", m:"능가하다, 넘어서다"},
+    {w:"surplus", m:"과잉, 나머지"},
+    {w:"traduce", m:"비방하다, 중상하다"},
+    {w:"tranquil", m:"평온한, 차분한"},
+    {w:"transaction", m:"거래, 처리"},
+    {w:"transcend", m:"초월하다, 능가하다"},
+    {w:"transcribe", m:"기록하다, 베끼다"},
+    {w:"transgress", m:"위반하다, 넘어서다"},
+    {w:"transient", m:"일시적인, 덧없는"},
+    {w:"transition", m:"변천, 과도기"},
+    {w:"transmit", m:"보내다, 전파하다"},
+    {w:"transparent", m:"투명한, 명백한"},
+    {w:"transpire", m:"일어나다, 밝혀지다"},
+    {w:"transplant", m:"이식하다, 옮겨 심다"},
+    {w:"traverse", m:"가로지르다, 횡단하다"},
+    {w:"travesty", m:"모조품, 희화화"},
+    {w:"trespass", m:"침해하다, 침입하다"},
+    {w:"temerity", m:"무모함, 만용"},
+    {w:"temporal", m:"시간의, 현세의"},
+    {w:"tenable", m:"유지할 수 있는, 이치에 맞는"},
+    {w:"tenacious", m:"끈기 있는, 집요한"},
+    {w:"tenet", m:"주의, 교리"},
+    {w:"tenor", m:"취지, 성질"},
+    {w:"tentative", m:"임시의, 모호한"},
+    {w:"tenuous", m:"빈약한, 가는"},
+    {w:"tenure", m:"재임 기간, 보유 권한"},
+    {w:"tepid", m:"미지근한, 열의 없는"},
+    {w:"terse", m:"간결한, 짧은"},
+    {w:"tether", m:"매어놓다, 한계"},
+    {w:"therapeutic", m:"치료의, 치료법의"},
+    {w:"therapeutical", m:"치료상의"},
+    {w:"thermal", m:"열의, 온천의"},
+    {w:"thorough", m:"철저한, 완전한"},
+    {w:"thoroughfare", m:"통로, 주요 도로"},
+    {w:"throe", m:"고통, 진통"},
+    {w:"throng", m:"군중, 인파"},
+    {w:"thwart", m:"방해하다, 좌절시키다"},
+    {w:"timid", m:"겁 많은, 소심한"},
+    {w:"unarmed", m:"무장의, 무기를 잡지 않은"},
+    {w:"unattended", m:"방치된, 수행원이 없는"},
+    {w:"unbecoming", m:"어울리지 않는, 부적당한"},
+    {w:"unbiased", m:"편견 없는, 공정한"},
+    {w:"unbroken", m:"단절되지 않은, 길들여지지 않은"},
+    {w:"unconditional", m:"무조건적인"},
+    {w:"undaunted", m:"불굴의, 기죽지 않는"},
+    {w:"undo", m:"풀다, 무효로 만들다"},
+    {w:"undress", m:"옷을 벗다"},
+    {w:"undue", m:"부당한, 과도한"},
+    {w:"uneven", m:"평평하지 않은, 울퉁불퉁한"},
+    {w:"unfair", m:"불공정한"},
+    {w:"unfamiliar", m:"익숙하지 않은"},
+    {w:"unfavorable", m:"불리한, 비호의적인"},
+    {w:"unfold", m:"펼치다, 드러내다"},
+    {w:"uninterested", m:"무관심한"},
+    {w:"unkempt", m:"단정치 못한, 흐트러진"},
+    {w:"unlikely", m:"~할 것 같지 않은"},
+    {w:"unload", m:"짐을 내리다"},
+    {w:"unlock", m:"열다"},
+    {w:"unoccupied", m:"비어 있는, 한가한"},
+    {w:"unofficial", m:"비공식의"},
+    {w:"unprecedented", m:"전례 없는"},
+    {w:"unquenchable", m:"억누를 수 없는, 끌 수 없는"},
+    {w:"unreliable", m:"신뢰할 수 없는"},
+    {w:"unremitting", m:"끈질긴, 끊임없는"},
+    {w:"unrest", m:"불안, 동요"},
+    {w:"unscrupulous", m:"파렴치한, 비도덕적인"},
+    {w:"timorous", m:"겁 많은, 소심한"},
+    {w:"tirade", m:"비난, 장광설"},
+    {w:"titular", m:"이름뿐인, 명목상의"},
+    {w:"toil", m:"노고, 수고"},
+    {w:"topple", m:"넘어뜨리다, 몰락시키다"},
+    {w:"torpid", m:"나태한, 무감각한"},
+    {w:"tortuous", m:"구불구불한, 에두르는"},
+    {w:"touchy", m:"민감한, 화를 잘 내는"},
+    {w:"toxic", m:"독성의, 유해한"},
+    {w:"tractable", m:"다루기 쉬운, 유순한"},
+    {w:"trample", m:"짓밟다, 무시하다"},
+    {w:"traumatic", m:"정신적 외상의, 충격적인"},
+    {w:"travail", m:"노고, 고통"},
+    {w:"treaty", m:"조약, 협정"},
+    {w:"tremendous", m:"엄청난, 거대한"},
+    {w:"trenchant", m:"날카로운, 명쾌한"},
+    {w:"trepidation", m:"공포, 전율"},
+    {w:"tribunal", m:"법정, 재판소"},
+    {w:"tribute", m:"조공, 찬사"},
+    {w:"trite", m:"진부한, 흔해 빠진"},
+    {w:"unseemly", m:"부적절한, 꼴사나운"},
+    {w:"unsettled", m:"결정되지 않은, 불안정한"},
+    {w:"unsophisticated", m:"단순한, 소박한"},
+    {w:"unstable", m:"불안정한"},
+    {w:"unsuitable", m:"부적당한"},
+    {w:"untold", m:"말할 수 없는, 엄청난"},
+    {w:"unwholesome", m:"해로운, 건강하지 못한"},
+    {w:"underestimate", m:"과소평가하다"},
+    {w:"underhand", m:"비밀의, 부정직한"},
+    {w:"underlying", m:"기저의, 근본적인"},
+    {w:"undermine", m:"약화시키다, 밑을 파다"},
+    {w:"undertake", m:"떠맡다, 착수하다"},
+    {w:"upbraid", m:"비난하다, 꾸짖다"},
+    {w:"upgrade", m:"상향시키다, 향상"},
+    {w:"upheaval", m:"격변, 대소동"},
+    {w:"uplift", m:"사기를 높이다, 들어 올리다"},
+    {w:"uppermost", m:"최고의, 가장 위의"},
+    {w:"uprising", m:"반란, 폭동"},
+    {w:"uproar", m:"소동, 소란"},
+    {w:"uproot", m:"근절하다, 뿌리째 뽑다"},
+    {w:"truce", m:"휴전, 정전"},
+    {w:"truculent", m:"잔인한, 호전적인"},
+    {w:"tumble", m:"넘어지다, 폭락하다"},
+    {w:"turbid", m:"탁한, 혼란된"},
+    {w:"turbulent", m:"사나운, 소란스러운"},
+    {w:"turgid", m:"과장된, 부어오른"},
+    {w:"turmoil", m:"혼란, 소란"},
+    {w:"tutelage", m:"지도, 교육"},
+    {w:"typify", m:"상징하다, 전형이 되다"},
+    {w:"tyranny", m:"폭정, 독재"},
+    {w:"tyro", m:"초심자, 신출내기"},
+    {w:"ubiquitous", m:"어디에나 있는"},
+    {w:"ulterior", m:"이면의, 숨은"},
+    {w:"ultimate", m:"최종적인, 궁극적인"},
+    {w:"umbrage", m:"분개, 화"},
+    {w:"undulate", m:"물결치다, 파동치다"},
+    {w:"urbane", m:"세련된, 도시풍의"},
+    {w:"usher", m:"안내하다"},
+    {w:"uxorious", m:"공처가의, 아내에게 절설매는"},
+    {w:"vacillate", m:"망설이다, 흔들리다"}
+  ];
+
+// ==================== 주관식 예문 (단어 → 짧은 예문) ====================
+// 단어(w)를 키로 병합합니다. 예문이 없는 단어는 힌트가 표시되지 않으며,
+// 아래에 "단어":"예문", 형태로 계속 추가하면 자동으로 주관식 화면에 나옵니다.
+const EXAMPLES = {
+  "antidote":"This antidote cures snake poison.",
+  "antipathy":"She felt deep antipathy toward liars.",
+  "antiseptic":"Clean the wound with antiseptic first.",
+  "census":"The census counted every citizen.",
+  "cessation":"They demanded a cessation of fighting.",
+  "chagrin":"To his chagrin, he lost again.",
+  "chaotic":"The messy, crowded room looked chaotic.",
+  "charlatan":"That charlatan sold fake medicine.",
+  "chary":"Be chary of a stranger's promises.",
+  "chasm":"A deep chasm split the mountain.",
+  "chaste":"She led a pure, chaste life.",
+  "chasten":"The hard defeat chastened the proud team.",
+  "chastise":"He chastised the lazy workers harshly.",
+  "chicanery":"He won by tricks and chicanery.",
+  "chide":"Mom chided me for being late.",
+  "choleric":"His choleric boss yells all day.",
+  "chronic":"She suffers from chronic back pain.",
+  "chubby":"The chubby baby had round cheeks.",
+  "citadel":"Soldiers defended the hilltop citadel.",
+  "cite":"She cited a famous author in her essay.",
+  "clairvoyant":"The clairvoyant seemed to foresee the future.",
+  "clamber":"The kids clambered up the rocks.",
+  "clamorous":"The clamorous crowd shouted loudly.",
+  "befall":"Misfortune may befall the careless.",
+  "beget":"Violence often begets more violence.",
+  "beguile":"He beguiled her with sweet lies.",
+  "behold":"Behold the beautiful sunset!",
+  "belabor":"Don't belabor such an obvious point.",
+  "belated":"He sent a belated birthday card.",
+  "belie":"Her calm smile belied her sadness.",
+  "belittle":"Don't belittle his honest efforts.",
+  "bemoan":"They bemoaned their terrible bad luck.",
+  "bemuse":"The strange riddle bemused everyone.",
+  "bequeath":"She bequeathed her house to charity.",
+  "berate":"The coach berated the lazy players.",
+  "bereave":"The war bereaved her of a son.",
+  "beseech":"I beseech you to forgive me.",
+  "beset":"Many problems beset the new project.",
+  "besiege":"Soldiers besieged the walled city.",
+  "bethink":"He bethought himself of a clever plan.",
+  "betroth":"Her parents betrothed her when young.",
+  "bewail":"They bewailed the lost soldiers.",
+  "bewitch":"Her beauty bewitched the prince.",
+  "benediction":"The priest gave a final benediction.",
+  "benefactor":"A rich benefactor funded the school.",
+  "beneficent":"The beneficent king helped the poor.",
+  "benevolent":"A benevolent smile warmed the room.",
+  "benign":"The benign teacher never shouted.",
+  "bounteous":"They enjoyed a bounteous harvest.",
+  "clandestine":"They held a clandestine secret meeting.",
+  "cleave":"The axe cleaved the log in two.",
+  "clemency":"The judge showed mercy and clemency.",
+  "cliche":"'Time heals all' is a tired cliche.",
+  "clientele":"The shop has wealthy clientele.",
+  "climax":"The movie's climax was thrilling.",
+  "clique":"A small clique controlled the class.",
+  "clog":"Hair can clog the bathroom drain.",
+  "cloister":"Quiet monks live in the cloister.",
+  "clone":"Scientists made a clone of the sheep.",
+  "coax":"She coaxed the shy child to smile.",
+  "colossal":"The colossal statue towered above us.",
+  "coma":"He lay in a coma for weeks.",
+  "comely":"The comely girl had a sweet face.",
+  "corollary":"Stress is a corollary of overwork.",
+  "corpulent":"The corpulent man filled the chair.",
+  "covetous":"His covetous eyes wanted the gold.",
+  "coy":"She gave a coy, shy smile.",
+  "crash":"The car crash damaged both cars.",
+  "craven":"The craven soldier fled in fear.",
+  "circuit":"Electricity flows through the circuit.",
+  "circumference":"Measure the circle's circumference.",
+  "circumlocution":"Avoid circumlocution and speak directly.",
+  "circumscribe":"Strict rules circumscribe our freedom.",
+  "circumspect":"Be circumspect before signing anything.",
+  "circumvent":"He circumvented the strict rules.",
+  "coalition":"Three parties formed a coalition.",
+  "coerce":"Don't coerce him into agreeing.",
+  "cogent":"She made a cogent, convincing argument.",
+  "cogitate":"He cogitated over the hard problem.",
+  "cognate":"English and German are cognate languages.",
+  "cognition":"Memory is part of human cognition.",
+  "cohere":"The ideas cohere into one theory.",
+  "coincide":"Our two vacations happily coincide.",
+  "collaborate":"Both teams collaborated on the project.",
+  "collapse":"The old bridge collapsed suddenly.",
+  "collate":"She collated all the survey data.",
+  "collateral":"The house served as loan collateral.",
+  "colleague":"My colleague sits beside me at work.",
+  "collide":"Two trains nearly collided.",
+  "colloquial":"'Gonna' is a colloquial word.",
+  "collude":"They colluded to fix the prices.",
+  "combustion":"Engines run on fuel combustion.",
+  "commandeer":"The army commandeered the trucks.",
+  "commemorate":"We commemorate the war heroes.",
+  "commence":"The ceremony will commence at noon.",
+  "commend":"The boss commended her hard work.",
+  "commensurate":"Pay should be commensurate with skill.",
+  "commiserate":"Friends commiserated over his loss.",
+  "commodious":"The commodious room felt spacious.",
+  "credence":"Don't give credence to wild rumors."
+};
+
+// ==================== 전역 상태 ====================
+let currentSetIndex = 0;
+let currentMode = 'mc';
+
+// 객관식
+let quizQueue = [];
+let quizTotal = 0;
+let wrongWords = new Set();
+
+// 주관식
+let writeQueue = [];
+let writeTotal = 0;
+let writeCurrent = 0;
+let writeCorrectCount = 0;
+let writeWrongWords = new Set();
+let writeAnswerShown = false;
+
+// === 주관식 / 오답 반복 / 복습 설정 ===
+const MAX_WRITE_ROUNDS = 1;    // 주관식 전체시험 회차 (1회만 보고 종료)
+const WRITE_WRONG_REPEAT = 3;  // ③단계: 주관식 오답 단어당 맞혀야 하는 횟수
+let writeRound = 0;            // 현재 회차(항상 1)
+let writeMode = 'full';        // 'full'(주관식 1회) | 'wrongonly'(③ 오답 반복)
+let writeWrongPool = {};       // word -> item객체 (오답 풀)
+let writeNeed = {};            // word -> 남은 정답 필요 횟수 (오답모드)
+let writeWrongQueue = [];      // 오답모드 진행 큐
+
+// 오답 전용 시험
+let wrongOnlyMode = false;
+
+let studyProgress = JSON.parse(localStorage.getItem('vocab_master_v3_progress')) || {};
+let wrongLog = JSON.parse(localStorage.getItem('vocab_master_v3_wronglog')) || {};
+let isLightMode = localStorage.getItem('vocab_master_theme') === 'light';
+
+// ==================== 3단계 통과 구조 ====================
+// setProgress[i] = { mcPass: bool, wrPass: bool, wnPass: bool, bestMc, bestWr, bestWn }
+// 세트 잠금: 이전 세트의 3단계 모두 통과해야 다음 세트 이동
+
+function getSetRec(idx) {
+  return studyProgress[idx] || { mcPass:false, wrPass:false, wnPass:false, bestMc:0, bestWr:0, bestWn:0 };
+}
+
+// 통과 기준 점수
+const PASS_SCORE = 80;          // (구) 호환용 기본값
+const PASS_MC = 80;             // ① 객관식 커트라인
+const PASS_WR = 70;             // ② 주관식 커트라인
+
+function isSetFullyCleared(idx) {
+  const r = getSetRec(idx);
+  return r.mcPass && r.wrPass && r.wnPass;   // ① 객관식 ② 주관식 ③ 오답노트(100점)
+}
+
+function getMaxAllowedSetIndex() {
+  const totalSets = Math.ceil(ALL_WORDS.length / 10);
+  let allowed = 0;
+  for (let i = 0; i < totalSets; i++) {
+    if (isSetFullyCleared(i)) allowed = i + 1;
+    else break;
+  }
+  return Math.min(allowed, totalSets - 1);
+}
+
+function enforceSetLock() {
+  const max = getMaxAllowedSetIndex();
+  if (currentSetIndex > max) currentSetIndex = max;
+}
+
+// 현재 세트에서 다음 해야 할 단계
+function nextRequiredStage() {
+  const r = getSetRec(currentSetIndex);
+  if (!r.mcPass) return 'mc';
+  if (!r.wrPass) return 'wr';
+  if (!r.wnPass) return 'wn';
+  return 'done';
+}
+
+// ==================== 유사도 ====================
+function normalize(str) {
+  return str
+    .replace(/[,，、·\s]/g, '')
+    .replace(/[\(\)（）]/g, '')
+    .replace(/하다$/, '').replace(/시키다$/, '').replace(/되다$/, '')
+    .trim();
+}
+
+function isSimilarEnough(input, answer) {
+  // 유의어/부분일치/오타 허용 없이, 표기된 뜻과 완전히 일치할 때만 정답 처리
+  const normInput = normalize(input);
+  const normAnswer = normalize(answer);
+  if (normInput === normAnswer) return { match: true, type: 'exact' };
+  const parts = answer.split(/[,，、]/);
+  for (const part of parts) {
+    const normPart = normalize(part);
+    if (normInput === normPart) return { match: true, type: 'exact' };
+  }
+  return { match: false };
+}
+
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({length:m+1},(_,i)=>Array.from({length:n+1},(_,j)=>i===0?j:j===0?i:0));
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
+    dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+// ==================== 테마 ====================
+function toggleTheme() {
+  isLightMode = !isLightMode;
+  applyTheme();
+  localStorage.setItem('vocab_master_theme', isLightMode ? 'light' : 'dark');
+}
+function applyTheme() {
+  document.body.classList.toggle('light-mode', isLightMode);
+  document.querySelector('.theme-btn').textContent = isLightMode ? '🌙' : '☀️';
+}
+
+// ==================== 저장 ====================
+function saveLocal() {
+  localStorage.setItem('vocab_master_v3_progress', JSON.stringify(studyProgress));
+  localStorage.setItem('vocab_master_v3_lastSet', currentSetIndex);
+  localStorage.setItem('vocab_master_v3_wronglog', JSON.stringify(wrongLog));
+}
+function loadLastPosition() {
+  const last = localStorage.getItem('vocab_master_v3_lastSet');
+  if (last !== null) currentSetIndex = parseInt(last);
+}
+
+// ==================== 세트 선택 ====================
+function createSetOptions() {
+  const sel = document.getElementById('set-jump');
+  const totalSets = Math.ceil(ALL_WORDS.length / 10);
+  const maxAllowed = getMaxAllowedSetIndex();
+  sel.innerHTML = '';
+  for (let i = 0; i < totalSets; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    const r = getSetRec(i);
+    const cleared = isSetFullyCleared(i);
+    const locked = i > maxAllowed;
+    opt.disabled = locked;
+    const tag = cleared ? ' ✅' : (locked ? ' 🔒' : '');
+    opt.textContent = `SET ${i+1}${tag} (MC:${r.bestMc||0} WR:${r.bestWr||0})`;
+    sel.appendChild(opt);
+  }
+  sel.value = currentSetIndex;
+}
+
+function jumpToSet(val) {
+  const req = parseInt(val);
+  const max = getMaxAllowedSetIndex();
+  if (req > max) {
+    document.getElementById('set-jump').value = currentSetIndex;
+    alert('이전 세트를 3단계 모두 통과해야 이동할 수 있습니다.');
+    return;
+  }
+  currentSetIndex = req;
+  loadSet();
+  saveLocal();
+}
+
+function shuffle(arr) {
+  let a = [...arr];
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+// ==================== 화면 ====================
+function hideAll() {
+  ['study-view','quiz-view','write-view','result-view','wrong-note-view'].forEach(id=>
+    document.getElementById(id).classList.add('hidden'));
+  document.getElementById('main-tabs').classList.add('hidden');
+  document.getElementById('pass-status').classList.add('hidden');
+}
+
+function showTabBar() {
+  const r = getSetRec(currentSetIndex);
+  document.getElementById('main-tabs').classList.remove('hidden');
+  document.getElementById('pass-status').classList.remove('hidden');
+
+  // 탭 상태
+  const mcBtn = document.getElementById('tab-mc');
+  const wrBtn = document.getElementById('tab-wr');
+  const wnBtn = document.getElementById('tab-wn');
+
+  [mcBtn, wrBtn, wnBtn].forEach(b=>{ b.classList.remove('active','locked','cleared'); });
+
+  if(r.mcPass) mcBtn.classList.add('cleared'); 
+  if(r.wrPass) wrBtn.classList.add('cleared');
+  if(r.wnPass) wnBtn.classList.add('cleared');
+
+  // 잠금: 주관식은 객관식 통과 후, 오답노트는 주관식 통과 후
+  if(!r.mcPass) { wrBtn.classList.add('locked'); }
+  if(!r.wrPass) { wnBtn.classList.add('locked'); }
+
+  // 칩 상태
+  const chipMc = document.getElementById('chip-mc');
+  const chipWr = document.getElementById('chip-wr');
+  const chipWn = document.getElementById('chip-wn');
+  chipMc.className = 'pass-chip' + (r.mcPass?' done':' active');
+  chipWr.className = 'pass-chip' + (r.wrPass?' done':r.mcPass?' active':'');
+  if(chipWn) chipWn.className = 'pass-chip' + (r.wnPass?' done':r.wrPass?' active':'');
+}
+
+function tryTab(tab) {
+  const r = getSetRec(currentSetIndex);
+  if(tab==='wr' && !r.mcPass){ alert('① 객관식을 먼저 통과하세요!'); return; }
+  if(tab==='wn' && !r.wrPass){ alert('② 주관식을 먼저 통과하세요!'); return; }
+  currentMode = tab;
+  ['tab-mc','tab-wr','tab-wn'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(tab==='mc') startMCQuiz();
+  else if(tab==='wr') startWriteQuiz();
+  else if(tab==='wn') startWrongNoteStage();
+}
+
+function backToStudy() { loadSet(); }
+
+// ==================== 학습 화면 ====================
+function loadSet() {
+  wrongReviewActive=false;
+  wnStageActive=false;
+  enforceSetLock();
+  const start = currentSetIndex * 10;
+  let cw = ALL_WORDS.slice(start, start+10);
+  if(!cw.length) return;
+  let rv = [];
+  if(currentSetIndex>0){
+    rv = shuffle(ALL_WORDS.slice(0,start)).slice(0,10);
+    document.getElementById('review-badge').classList.remove('hidden');
+  } else {
+    document.getElementById('review-badge').classList.add('hidden');
+  }
+  const combined = shuffle([...cw,...rv]);
+  quizQueue = [...combined]; quizTotal = combined.length;
+  writeQueue = shuffle([...combined]); writeTotal = combined.length;
+  writeCurrent=0; writeCorrectCount=0; writeWrongWords=new Set();
+  wrongWords=new Set();
+
+  document.getElementById('set-jump').value = currentSetIndex;
+  updateHeaderStats();
+  showStudyView(cw);
+}
+
+function showStudyView(cw) {
+  hideAll();
+  document.getElementById('study-view').classList.remove('hidden');
+  document.getElementById('study-title').innerText = `SET ${currentSetIndex+1} 학습`;
+
+  const list = document.getElementById('study-list');
+  list.innerHTML='';
+  cw.forEach(item=>{
+    const d=document.createElement('div');
+    d.className='study-item';
+    d.innerHTML=`<span>${item.w}</span><b>${item.m}</b>`;
+    list.appendChild(d);
+  });
+
+  // 통과 현황 안내
+  const r = getSetRec(currentSetIndex);
+  const info = document.getElementById('pass-info');
+  if(isSetFullyCleared(currentSetIndex)){
+    info.classList.add('hidden');
+  } else {
+    const stage = nextRequiredStage();
+    const stageLabel = {mc:'① 객관식', wr:'② 주관식', wn:'③ 오답노트'};
+    info.innerHTML = `<b>다음 단계: ${stageLabel[stage]}</b><br>
+      ① 객관식 ${r.mcPass?'✅':'❌'} &nbsp; ② 주관식 ${r.wrPass?'✅':'❌'} &nbsp; ③ 오답노트 ${r.wnPass?'✅':'❌'}<br>
+      <small>① 객관식 ${PASS_MC}점 · ② 주관식 ${PASS_WR}점 · ③ 오답노트(주관식 오답 다시) 100점 → 세 단계 모두 통과하면 다음 SET으로 이동!</small>`;
+    info.classList.remove('hidden');
+  }
+
+  // (복습시험 파트 제거됨)
+  const oldCta = document.getElementById('review-cta');
+  if(oldCta) oldCta.remove();
+}
+
+function updateHeaderStats() {
+  const badge = document.getElementById('stat-badge');
+  const r = getSetRec(currentSetIndex);
+  if(isSetFullyCleared(currentSetIndex)){
+    badge.innerText='ALL CLEAR ✅'; badge.classList.add('perfect-badge');
+  } else {
+    badge.innerText=`MC:${r.bestMc||0} WR:${r.bestWr||0}`; badge.classList.remove('perfect-badge');
+  }
+}
+
+function startMode() {
+  hideAll();
+  showTabBar();
+  ['tab-mc','tab-wr'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('tab-mc').classList.add('active');
+  currentMode='mc';
+  wrongWords=new Set();
+  startMCQuiz();
+}
+
+// ==================== 객관식 ====================
+function startMCQuiz() {
+  hideAll();
+  showTabBar();
+  document.getElementById('quiz-view').classList.remove('hidden');
+  wrongWords=new Set();
+  quizQueue = [...quizQueue.length ? quizQueue : []]; // 이미 세팅된 큐 사용
+  // 새로 시작 시 재셔플
+  const start = currentSetIndex*10;
+  let cw = ALL_WORDS.slice(start,start+10);
+  let rv = currentSetIndex>0 ? shuffle(ALL_WORDS.slice(0,start)).slice(0,10) : [];
+  quizQueue = shuffle([...cw,...rv]);
+  quizTotal = quizQueue.length;
+  renderQuestion();
+}
+
+function renderQuestion() {
+  document.getElementById('next-q-btn').classList.add('hidden');
+  document.getElementById('feedback').innerText='';
+  const rem = quizQueue.length;
+  document.getElementById('quiz-progress-text').innerText=`남은 단어: ${rem}`;
+  const pct = quizTotal>0?Math.round(((quizTotal-rem)/quizTotal)*100):0;
+  document.getElementById('quiz-progress-bar').style.width=pct+'%';
+  if(rem===0){ showFinalResult('mc'); return; }
+  const item = quizQueue[0];
+  document.getElementById('target-word').innerText=item.w;
+  let opts=[item,...shuffle(ALL_WORDS.filter(w=>w.m!==item.m)).slice(0,4)];
+  opts=shuffle(opts);
+  const cont=document.getElementById('options-container');
+  cont.innerHTML='';
+  opts.forEach(opt=>{
+    const btn=document.createElement('button');
+    btn.className='opt-btn'; btn.innerText=opt.m;
+    btn.onclick=()=>handleMCAnswer(opt.m===item.m,btn,item);
+    cont.appendChild(btn);
+  });
+}
+
+function handleMCAnswer(isCorrect,btn,item){
+  document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+  if(isCorrect){
+    btn.classList.add('correct');
+    document.getElementById('feedback').innerText='Correct! ✨';
+    document.getElementById('feedback').style.color='var(--progress)';
+    quizQueue.shift();
+  } else {
+    btn.classList.add('wrong');
+    document.getElementById('feedback').innerText=`오답! 정답: [${item.m}]`;
+    document.getElementById('feedback').style.color='var(--wrong)';
+    document.querySelectorAll('.opt-btn').forEach(b=>{ if(b.innerText===item.m) b.classList.add('correct'); });
+    wrongWords.add(item.w);
+    wrongLog[item.w]=(wrongLog[item.w]||0)+1;
+    saveLocal();
+    const w=quizQueue.shift(); quizQueue.push(w);
+  }
+  document.getElementById('next-q-btn').classList.remove('hidden');
+}
+
+// ==================== 주관식 ====================
+// 처음 시작: 1회차부터, 누적 오답 풀 초기화
+function startWriteQuiz() {
+  writeRound = 1;
+  writeMode = 'full';
+  writeWrongPool = {};
+  beginWriteRound();
+}
+
+// 전체시험 1회차 세팅 (writeRound 사용)
+function beginWriteRound() {
+  hideAll();
+  showTabBar();
+  document.getElementById('write-view').classList.remove('hidden');
+  const badge = document.querySelector('#write-view .best-score');
+  if(badge) badge.textContent = `② 주관식`;
+  const start=currentSetIndex*10;
+  let cw=ALL_WORDS.slice(start,start+10);
+  let rv=currentSetIndex>0?shuffle(ALL_WORDS.slice(0,start)).slice(0,10):[];
+  writeQueue=shuffle([...cw,...rv]);
+  writeTotal=writeQueue.length;
+  writeCurrent=0; writeCorrectCount=0; writeWrongWords=new Set();
+  renderWriteQuestion();
+}
+
+function choseong(str){
+  // 첫 번째 한글 음절의 초성만 공개, 나머지 음절은 ○로 표시 (난이도 상향)
+  const CHO=['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+  let out='';
+  let firstShown=false;
+  for(const ch of str){
+    const code=ch.charCodeAt(0);
+    if(code>=0xAC00 && code<=0xD7A3){
+      if(!firstShown){ out+=CHO[Math.floor((code-0xAC00)/588)]; firstShown=true; }
+      else out+='○';
+    }
+    else if(ch===' ') out+=' ';
+    // 영문/숫자/기호는 무시
+  }
+  return out.trim();
+}
+
+function setChoseong(item){
+  const el=document.getElementById('write-choseong');
+  if(!el) return;
+  const first=(item.m.split(/[,，、]/)[0]||'').trim();  // 첫 번째 뜻 기준
+  const cho=choseong(first);
+  el.innerHTML = cho ? '<span class="cho-label">초성 힌트</span>'+cho : '';
+}
+
+function setWriteHint(item){
+  const el=document.getElementById('write-hint');
+  if(!el) return;
+  const ex = (typeof EXAMPLES!=='undefined') ? EXAMPLES[item.w] : null;
+  if(ex){
+    // 예문 안의 표제어(굴절형 포함)를 강조
+    const re = new RegExp('('+item.w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'[a-z]*)','i');
+    el.innerHTML = '💬 ' + ex.replace(re, '<b style="color:var(--accent)">$1</b>');
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+function renderWriteQuestion(){
+  if(writeCurrent>=writeTotal){ showFinalResult('wr'); return; }
+  const item=writeQueue[writeCurrent];
+  document.getElementById('write-target-word').innerText=item.w;
+  setWriteHint(item);
+  setChoseong(item);
+  document.getElementById('write-answer-hint').innerText='';
+  const inp=document.getElementById('write-input');
+  inp.value=''; inp.className='write-input'; inp.disabled=false; inp.focus();
+  document.getElementById('write-submit-btn').classList.remove('hidden');
+  document.getElementById('write-next-btn').classList.add('hidden');
+  writeAnswerShown=false;
+  const pct=writeTotal>0?Math.round((writeCurrent/writeTotal)*100):0;
+  document.getElementById('write-progress-bar').style.width=pct+'%';
+  document.getElementById('write-progress-text').innerText=`주관식 ${writeCurrent+1} / ${writeTotal}`;
+}
+
+function handleWriteKey(e){
+  if(e.key!=='Enter') return;
+  if(!writeAnswerShown) submitWriteAnswer(); else nextWriteQuestion();
+}
+
+function submitWriteAnswer(){
+  if(wnStageActive){ submitWnAnswer(); return; }
+  if(wrongReviewActive){ submitWrongReviewWR(); return; }
+  if(writeMode==='wrongonly'){ submitWriteWrongAnswer(); return; }
+  const inp=document.getElementById('write-input');
+  const userInput=inp.value.trim(); if(!userInput) return;
+  const item=writeQueue[writeCurrent];
+  const result=isSimilarEnough(userInput,item.m);
+  inp.disabled=true;
+  document.getElementById('write-submit-btn').classList.add('hidden');
+  document.getElementById('write-next-btn').classList.remove('hidden');
+  writeAnswerShown=true;
+  if(result.match){
+    inp.classList.add('correct-input');
+    const badge=result.type==='exact'
+      ?'<span class="similarity-badge badge-exact">완전 일치 ✓</span>'
+      :'<span class="similarity-badge badge-similar">유사 정답 ✓</span>';
+    document.getElementById('write-answer-hint').innerHTML=`정답: ${item.m} ${badge}`;
+    document.getElementById('write-answer-hint').style.color='var(--progress)';
+    writeCorrectCount++;
+  } else {
+    inp.classList.add('wrong-input');
+    document.getElementById('write-answer-hint').innerHTML=`정답: <b>${item.m}</b>`;
+    document.getElementById('write-answer-hint').style.color='var(--wrong)';
+    writeWrongWords.add(item.w);
+    writeWrongPool[item.w]=item;   // 1~3회차 누적 오답 풀
+    wrongLog[item.w]=(wrongLog[item.w]||0)+1;
+    saveLocal();
+  }
+}
+
+function nextWriteQuestion(){
+  if(wnStageActive){ renderWnQuestion(); return; }
+  if(wrongReviewActive){ renderWrongReviewWR(); return; }
+  if(writeMode==='wrongonly'){ nextWriteWrongQuestion(); return; }
+  writeCurrent++; renderWriteQuestion();
+}
+
+// (구) 주관식 오답모드 → 현재는 ③ startSetWrongRepeat로 통합
+function startWriteWrongOnly(){ startSetWrongRepeat(); }
+
+// (구) 통과 처리 → ③ 통과 처리로 위임 (정의되지 않은 함수 참조 방지)
+function passWriteStage(){ passWriteWrongStage(); }
+
+function rebuildWriteWrongQueue(){
+  writeWrongQueue=shuffle(Object.keys(writeNeed).filter(w=>writeNeed[w]>0).map(w=>writeWrongPool[w]));
+}
+
+function writeWrongProgress(){
+  const totalWords=Object.keys(writeNeed).length;
+  const remaining=Object.keys(writeNeed).filter(w=>writeNeed[w]>0).length;
+  return { totalWords, remaining, cleared: totalWords-remaining };
+}
+
+function renderWriteWrongQuestion(){
+  const p=writeWrongProgress();
+  if(p.remaining===0){ passWriteWrongStage(); return; }
+  if(writeWrongQueue.length===0) rebuildWriteWrongQueue();
+  const item=writeWrongQueue[0];
+  document.getElementById('write-target-word').innerText=item.w;
+  setWriteHint(item);
+  document.getElementById('write-answer-hint').innerText='';
+  const inp=document.getElementById('write-input');
+  inp.value=''; inp.className='write-input'; inp.disabled=false; inp.focus();
+  document.getElementById('write-submit-btn').classList.remove('hidden');
+  document.getElementById('write-next-btn').classList.add('hidden');
+  writeAnswerShown=false;
+  const pct=p.totalWords>0?Math.round((p.cleared/p.totalWords)*100):0;
+  document.getElementById('write-progress-bar').style.width=pct+'%';
+  const need=writeNeed[item.w];
+  document.getElementById('write-progress-text').innerText=`오답 ${p.remaining}개 남음 · 이 단어 ${WRITE_WRONG_REPEAT-need+1}/${WRITE_WRONG_REPEAT}`;
+}
+
+function submitWriteWrongAnswer(){
+  const inp=document.getElementById('write-input');
+  const userInput=inp.value.trim(); if(!userInput) return;
+  const item=writeWrongQueue[0];
+  const result=isSimilarEnough(userInput,item.m);
+  inp.disabled=true;
+  document.getElementById('write-submit-btn').classList.add('hidden');
+  document.getElementById('write-next-btn').classList.remove('hidden');
+  writeAnswerShown=true;
+  if(result.match){
+    inp.classList.add('correct-input');
+    writeNeed[item.w]=Math.max(0,(writeNeed[item.w]||0)-1);
+    const left=writeNeed[item.w];
+    const badge=result.type==='exact'
+      ?'<span class="similarity-badge badge-exact">완전 일치 ✓</span>'
+      :'<span class="similarity-badge badge-similar">유사 정답 ✓</span>';
+    const msg = left>0 ? `정답: ${item.m} ${badge} <small>(${left}번 더!)</small>`
+                       : `정답: ${item.m} ${badge} <small>(이 단어 통과 ✅)</small>`;
+    document.getElementById('write-answer-hint').innerHTML=msg;
+    document.getElementById('write-answer-hint').style.color='var(--progress)';
+    writeWrongQueue.shift();  // 맞히면 큐에서 제거 (left>0이면 다음 회전에 재등장)
+  } else {
+    inp.classList.add('wrong-input');
+    document.getElementById('write-answer-hint').innerHTML=`정답: <b>${item.m}</b> <small>(다시 도전)</small>`;
+    document.getElementById('write-answer-hint').style.color='var(--wrong)';
+    wrongLog[item.w]=(wrongLog[item.w]||0)+1;
+    saveLocal();
+    const w=writeWrongQueue.shift(); writeWrongQueue.push(w);  // 틀리면 뒤로 보냄 (진행도 유지)
+  }
+}
+
+function nextWriteWrongQuestion(){
+  if(writeWrongQueue.length===0) rebuildWriteWrongQueue();
+  renderWriteWrongQuestion();
+}
+
+// (구) ③ 오답노트/오답반복 — 현재 2단계 구조에서는 사용하지 않음 (안전 스텁)
+function showWrongNote(){ loadSet(); }
+function startSetWrongRepeat(){ loadSet(); }
+
+// (구) ③ 단계 통과 처리 — 현재 흐름에서는 사용하지 않음
+function passWriteWrongStage(){
+  writeMode='full';
+  loadSet();
+}
+
+function startWrongOnlyQuiz(){
+  const wl=Object.entries(wrongLog).filter(([,c])=>c>0).map(([w])=>ALL_WORDS.find(x=>x.w===w)).filter(Boolean);
+  if(!wl.length){ alert('오답 단어가 없습니다!'); return; }
+  wrongOnlyMode=true;
+  quizQueue=shuffle(wl); quizTotal=quizQueue.length;
+  wrongWords=new Set();
+  hideAll();
+  showTabBar();
+  document.getElementById('quiz-view').classList.remove('hidden');
+  document.querySelector('.header .best-score').textContent='③ 오답시험';
+  renderWrongOnlyQuestion();
+}
+
+function renderWrongOnlyQuestion(){
+  document.getElementById('next-q-btn').classList.add('hidden');
+  document.getElementById('feedback').innerText='';
+  const rem=quizQueue.length;
+  document.getElementById('quiz-progress-text').innerText=`남은 단어: ${rem}`;
+  const pct=quizTotal>0?Math.round(((quizTotal-rem)/quizTotal)*100):0;
+  document.getElementById('quiz-progress-bar').style.width=pct+'%';
+  if(rem===0){ showFinalResult('wn'); return; }
+  const item=quizQueue[0];
+  document.getElementById('target-word').innerText=item.w;
+  let opts=[item,...shuffle(ALL_WORDS.filter(w=>w.m!==item.m)).slice(0,4)];
+  opts=shuffle(opts);
+  const cont=document.getElementById('options-container');
+  cont.innerHTML='';
+  opts.forEach(opt=>{
+    const btn=document.createElement('button');
+    btn.className='opt-btn'; btn.innerText=opt.m;
+    btn.onclick=()=>handleWrongOnlyAnswer(opt.m===item.m,btn,item);
+    cont.appendChild(btn);
+  });
+  // next 버튼은 wrong only 전용 함수로 연결
+  document.getElementById('next-q-btn').onclick=renderWrongOnlyQuestion;
+}
+
+function handleWrongOnlyAnswer(isCorrect,btn,item){
+  document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+  if(isCorrect){
+    btn.classList.add('correct');
+    document.getElementById('feedback').innerText='Correct! ✨';
+    document.getElementById('feedback').style.color='var(--progress)';
+    quizQueue.shift();
+  } else {
+    btn.classList.add('wrong');
+    document.getElementById('feedback').innerText=`오답! 정답: [${item.m}]`;
+    document.getElementById('feedback').style.color='var(--wrong)';
+    document.querySelectorAll('.opt-btn').forEach(b=>{ if(b.innerText===item.m) b.classList.add('correct'); });
+    wrongWords.add(item.w);
+    const w=quizQueue.shift(); quizQueue.push(w);
+  }
+  document.getElementById('next-q-btn').classList.remove('hidden');
+}
+
+// ==================== ③ 오답노트 ====================
+let wrongReviewActive = false;
+let wrongReviewQueue = [];
+let wrongReviewTotal = 0;
+let wrongReviewShown = false;
+
+function getWrongItems(){
+  return Object.entries(wrongLog)
+    .filter(([,c])=>c>0)
+    .map(([w])=>ALL_WORDS.find(x=>x.w===w))
+    .filter(Boolean);
+}
+
+function openWrongNote(){
+  wrongReviewActive=false;
+  hideAll(); showTabBar();
+  ['tab-mc','tab-wr','tab-wn'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('tab-wn').classList.add('active');
+  document.getElementById('wrong-note-view').classList.remove('hidden');
+  renderWrongNoteList();
+}
+
+function renderWrongNoteList(){
+  const items=getWrongItems();
+  document.getElementById('wn-count').textContent = `${items.length}개`;
+  const list=document.getElementById('wn-list');
+  const actions=document.getElementById('wn-actions');
+  list.innerHTML='';
+  if(items.length===0){
+    actions.style.display='none';
+    list.innerHTML='<p style="text-align:center;color:var(--muted);padding:30px 0;">🎉 오답이 없습니다!<br>객관식·주관식에서 틀린 단어가 여기에 모여요.</p>';
+    return;
+  }
+  actions.style.display='flex';
+  items.forEach(item=>{
+    const ex=(typeof EXAMPLES!=='undefined' && EXAMPLES[item.w])?EXAMPLES[item.w]:'';
+    const row=document.createElement('div');
+    row.className='wrong-note-item';
+    row.innerHTML=
+      `<span class="wn-word">${item.w}</span>`+
+      `<span class="wn-meaning">${item.m}${ex?`<br><small style="opacity:.7;">💬 ${ex}</small>`:''}</span>`+
+      `<button class="wn-del" onclick="removeWrongWord('${item.w}')">✓ 외움</button>`;
+    list.appendChild(row);
+  });
+}
+
+function removeWrongWord(w){
+  delete wrongLog[w];
+  saveLocal();
+  renderWrongNoteList();
+}
+
+function startWrongReview(mode){
+  const items=getWrongItems();
+  if(!items.length){ alert('복습할 오답 단어가 없습니다!'); return; }
+  wrongReviewActive=true;
+  wrongReviewQueue=shuffle([...items]);
+  wrongReviewTotal=wrongReviewQueue.length;
+  hideAll(); showTabBar();
+  ['tab-mc','tab-wr','tab-wn'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('tab-wn').classList.add('active');
+  if(mode==='wr'){
+    document.getElementById('write-view').classList.remove('hidden');
+    const lab=document.querySelector('#write-view .best-score'); if(lab) lab.textContent='③ 오답 복습';
+    renderWrongReviewWR();
+  } else {
+    document.getElementById('quiz-view').classList.remove('hidden');
+    const lab=document.querySelector('#quiz-view .best-score'); if(lab) lab.textContent='③ 오답 복습';
+    renderWrongReviewMC();
+  }
+}
+
+function wrongReviewProgress(){
+  const done=wrongReviewTotal-wrongReviewQueue.length;
+  const pct=wrongReviewTotal>0?Math.round((done/wrongReviewTotal)*100):0;
+  return {done,pct,remaining:wrongReviewQueue.length};
+}
+
+function finishWrongReview(){
+  wrongReviewActive=false;
+  const left=getWrongItems().length;
+  alert(left===0 ? '🎉 오답을 모두 맞혔어요! 오답노트가 비었습니다.' : `복습 완료! 남은 오답 ${left}개`);
+  openWrongNote();
+}
+
+// --- 오답 복습 (객관식) ---
+function renderWrongReviewMC(){
+  if(wrongReviewQueue.length===0){ finishWrongReview(); return; }
+  document.getElementById('next-q-btn').classList.add('hidden');
+  document.getElementById('feedback').innerText='';
+  const pr=wrongReviewProgress();
+  document.getElementById('quiz-progress-text').innerText=`남은 단어: ${pr.remaining}`;
+  document.getElementById('quiz-progress-bar').style.width=pr.pct+'%';
+  const item=wrongReviewQueue[0];
+  document.getElementById('target-word').innerText=item.w;
+  let opts=[item,...shuffle(ALL_WORDS.filter(w=>w.m!==item.m)).slice(0,4)];
+  opts=shuffle(opts);
+  const cont=document.getElementById('options-container'); cont.innerHTML='';
+  opts.forEach(opt=>{
+    const btn=document.createElement('button');
+    btn.className='opt-btn'; btn.innerText=opt.m;
+    btn.onclick=()=>handleWrongReviewMC(opt.m===item.m,btn,item);
+    cont.appendChild(btn);
+  });
+  document.getElementById('next-q-btn').onclick=renderWrongReviewMC;
+}
+
+function handleWrongReviewMC(isCorrect,btn,item){
+  document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+  if(isCorrect){
+    btn.classList.add('correct');
+    document.getElementById('feedback').innerText='맞았어요! 오답노트에서 제거 ✨';
+    document.getElementById('feedback').style.color='var(--progress)';
+    delete wrongLog[item.w]; saveLocal();
+    wrongReviewQueue.shift();
+  } else {
+    btn.classList.add('wrong');
+    document.getElementById('feedback').innerText=`오답! 정답: [${item.m}]`;
+    document.getElementById('feedback').style.color='var(--wrong)';
+    document.querySelectorAll('.opt-btn').forEach(b=>{ if(b.innerText===item.m) b.classList.add('correct'); });
+    const w=wrongReviewQueue.shift(); wrongReviewQueue.push(w); // 뒤로 보내 다시 출제
+  }
+  document.getElementById('next-q-btn').classList.remove('hidden');
+}
+
+// --- 오답 복습 (주관식) ---
+function renderWrongReviewWR(){
+  if(wrongReviewQueue.length===0){ finishWrongReview(); return; }
+  const item=wrongReviewQueue[0];
+  document.getElementById('write-target-word').innerText=item.w;
+  setWriteHint(item);
+  setChoseong(item);
+  document.getElementById('write-answer-hint').innerText='';
+  const inp=document.getElementById('write-input');
+  inp.value=''; inp.className='write-input'; inp.disabled=false; inp.focus();
+  document.getElementById('write-submit-btn').classList.remove('hidden');
+  document.getElementById('write-next-btn').classList.add('hidden');
+  wrongReviewShown=false; writeAnswerShown=false;
+  const pr=wrongReviewProgress();
+  document.getElementById('write-progress-bar').style.width=pr.pct+'%';
+  document.getElementById('write-progress-text').innerText=`오답 복습 · 남은 ${pr.remaining}개`;
+}
+
+function submitWrongReviewWR(){
+  const inp=document.getElementById('write-input');
+  const userInput=inp.value.trim(); if(!userInput) return;
+  const item=wrongReviewQueue[0];
+  const result=isSimilarEnough(userInput,item.m);
+  inp.disabled=true;
+  document.getElementById('write-submit-btn').classList.add('hidden');
+  document.getElementById('write-next-btn').classList.remove('hidden');
+  writeAnswerShown=true;
+  if(result.match){
+    inp.classList.add('correct-input');
+    const badge=result.type==='exact'
+      ?'<span class="similarity-badge badge-exact">완전 일치 ✓</span>'
+      :'<span class="similarity-badge badge-similar">유사 정답 ✓</span>';
+    document.getElementById('write-answer-hint').innerHTML=`정답: ${item.m} ${badge} <small>(오답노트에서 제거)</small>`;
+    document.getElementById('write-answer-hint').style.color='var(--progress)';
+    delete wrongLog[item.w]; saveLocal();
+    wrongReviewQueue.shift();
+  } else {
+    inp.classList.add('wrong-input');
+    document.getElementById('write-answer-hint').innerHTML=`정답: <b>${item.m}</b> <small>(다시 출제됩니다)</small>`;
+    document.getElementById('write-answer-hint').style.color='var(--wrong)';
+    const w=wrongReviewQueue.shift(); wrongReviewQueue.push(w);
+  }
+}
+
+// ==================== 결과 (① 객관식) ====================
+function showFinalResult(mode){
+  hideAll();
+  document.getElementById('result-view').classList.remove('hidden');
+
+  // 주관식 완료는 별도 처리
+  if(mode==='wr'){ finishWriteSinglePass(); return; }
+
+  // === 객관식 채점 ===
+  const wrongCount=wrongWords.size;
+  const total=quizTotal;
+  const score=Math.round(((total-wrongCount)/Math.max(1,total))*100);
+  wrongOnlyMode=false;
+
+  const r=getSetRec(currentSetIndex);
+  r.bestMc=Math.max(r.bestMc||0,score);
+  if(score>=PASS_MC) r.mcPass=true;
+  studyProgress[currentSetIndex]=r;
+  saveLocal(); createSetOptions(); updateHeaderStats();
+
+  const passed=score>=PASS_MC;
+  const allCleared=isSetFullyCleared(currentSetIndex);
+
+  document.getElementById('result-title').innerText = passed?'🏆 객관식 통과!':'① 객관식 결과';
+  const scoreBox=document.getElementById('result-score-container');
+  scoreBox.classList.remove('celebrate'); scoreBox.innerText=`${score}점`;
+  if(score===100) scoreBox.classList.add('celebrate');
+
+  let msg=`<b>[① 객관식] ${score}점</b><br>`;
+  if(passed){
+    msg += allCleared
+      ? '통과! ✅<br><b>🎉 SET 전체 완료! 다음 SET으로 이동할 수 있어요.</b>'
+      : '통과! ✅<br>이제 ② 주관식을 풀어보세요.';
+  } else {
+    msg += `틀린 단어 ${wrongCount}개 · <b>${PASS_MC}점 이상</b>이면 통과돼요. 다시 도전!`;
+  }
+  document.getElementById('result-msg').innerHTML=msg;
+
+  const area=document.getElementById('result-next-area');
+  area.innerHTML='';
+  if(passed && allCleared){
+    const btn=document.createElement('button');
+    btn.className='main-btn'; btn.textContent='다음 SET으로 이동 →';
+    btn.onclick=moveToNextSet; area.appendChild(btn);
+  } else if(passed){
+    const btn=document.createElement('button');
+    btn.className='main-btn'; btn.textContent='② 주관식 시작 →';
+    btn.onclick=()=>{
+      hideAll(); showTabBar();
+      ['tab-mc','tab-wr'].forEach(id=>document.getElementById(id).classList.remove('active'));
+      document.getElementById('tab-wr').classList.add('active');
+      startWriteQuiz();
+    };
+    area.appendChild(btn);
+  }
+
+  const retryBtn=document.createElement('button');
+  retryBtn.className='main-btn retry-btn'; retryBtn.textContent='🔄 다시 시도';
+  retryBtn.onclick=startMCQuiz; area.appendChild(retryBtn);
+
+  const backBtn=document.createElement('button');
+  backBtn.className='main-btn retry-btn'; backBtn.style.marginTop='6px'; backBtn.textContent='← 학습 화면으로';
+  backBtn.onclick=backToStudy; area.appendChild(backBtn);
+}
+
+// 주관식 완료 채점 (PASS_WR 이상이면 통과, 미만이면 다시 도전)
+function finishWriteSinglePass(){
+  const sc=Math.round((writeCorrectCount/Math.max(1,writeTotal))*100);
+  const r=getSetRec(currentSetIndex);
+  r.bestWr=Math.max(r.bestWr||0,sc);
+  if(sc>=PASS_WR){
+    r.wrPass=true;
+    // 이번 주관식에서 틀린 단어를 ③ 오답노트 단계용으로 저장
+    r.wrWrong=[...writeWrongWords];
+    if(r.wrWrong.length===0) r.wnPass=true;   // 오답 없으면 ③ 자동 통과
+  }
+  studyProgress[currentSetIndex]=r;
+  saveLocal(); createSetOptions(); updateHeaderStats();
+  showWriteResult(sc);
+}
+
+// 주관식 결과 화면
+function showWriteResult(sc){
+  hideAll();
+  document.getElementById('result-view').classList.remove('hidden');
+  const passed=sc>=PASS_WR;
+  const allCleared=isSetFullyCleared(currentSetIndex);
+  const r=getSetRec(currentSetIndex);
+
+  document.getElementById('result-title').innerText = passed?'🏆 주관식 통과!':'② 주관식 결과';
+  const sb=document.getElementById('result-score-container');
+  sb.classList.remove('celebrate'); sb.innerText=`${sc}점`;
+  if(sc===100) sb.classList.add('celebrate');
+
+  let msg=`<b>[② 주관식] ${sc}점</b><br>`;
+  if(passed){
+    if(allCleared){
+      msg += '통과! ✅<br><b>🎉 SET 전체 완료! 다음 SET으로 이동할 수 있어요.</b>';
+    } else if(!r.wnPass){
+      msg += `통과! ✅<br><b>이제 ③ 오답노트에서 틀린 ${(r.wrWrong||[]).length}개를 다시 풀어요. (100점이어야 통과)</b>`;
+    } else {
+      msg += '통과! ✅<br>남은 ① 객관식을 마저 풀어보세요.';
+    }
+  } else {
+    msg += `<b>${PASS_WR}점 이상</b>이면 통과돼요. 다시 도전!`;
+  }
+  document.getElementById('result-msg').innerHTML=msg;
+
+  const area=document.getElementById('result-next-area'); area.innerHTML='';
+  if(passed && allCleared){
+    const btn=document.createElement('button');
+    btn.className='main-btn'; btn.textContent='다음 SET으로 이동 →';
+    btn.onclick=moveToNextSet; area.appendChild(btn);
+  } else if(passed && !r.wnPass){
+    const btn=document.createElement('button');
+    btn.className='main-btn'; btn.textContent=`③ 오답노트 풀기 → (${(r.wrWrong||[]).length}개)`;
+    btn.onclick=startWrongNoteStage; area.appendChild(btn);
+  } else if(passed){
+    const btn=document.createElement('button');
+    btn.className='main-btn'; btn.textContent='① 객관식 시작 →';
+    btn.onclick=()=>{
+      hideAll(); showTabBar();
+      ['tab-mc','tab-wr','tab-wn'].forEach(id=>document.getElementById(id).classList.remove('active'));
+      document.getElementById('tab-mc').classList.add('active');
+      startMCQuiz();
+    };
+    area.appendChild(btn);
+  } else {
+    const btn=document.createElement('button');
+    btn.className='main-btn'; btn.textContent='🔄 주관식 다시 도전';
+    btn.onclick=startWriteQuiz; area.appendChild(btn);
+  }
+
+  const backBtn=document.createElement('button');
+  backBtn.className='main-btn retry-btn'; backBtn.style.marginTop='6px'; backBtn.textContent='← 학습 화면으로';
+  backBtn.onclick=backToStudy; area.appendChild(backBtn);
+}
+
+// ==================== ③ 오답노트 단계 (세트별 주관식 오답 재시험, 100점 통과) ====================
+let wnStageActive = false;
+let wnQueue = [];
+let wnTotal = 0;
+let wnCorrect = 0;
+
+function startWrongNoteStage(){
+  const r=getSetRec(currentSetIndex);
+  if(!r.mcPass){ alert('① 객관식을 먼저 통과하세요!'); return; }
+  if(!r.wrPass){ alert('② 주관식을 먼저 통과하세요!'); return; }
+  const words=(r.wrWrong||[]).map(w=>ALL_WORDS.find(x=>x.w===w)).filter(Boolean);
+  if(words.length===0){
+    r.wnPass=true; studyProgress[currentSetIndex]=r; saveLocal(); createSetOptions(); updateHeaderStats();
+    alert('주관식에서 틀린 단어가 없어 ③ 오답노트를 통과 처리합니다! 🎉');
+    showWnResult(100); return;
+  }
+  wnStageActive=true;
+  wnQueue=shuffle([...words]); wnTotal=wnQueue.length; wnCorrect=0;
+  hideAll(); showTabBar();
+  ['tab-mc','tab-wr','tab-wn'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('tab-wn').classList.add('active');
+  document.getElementById('write-view').classList.remove('hidden');
+  const lab=document.querySelector('#write-view .best-score'); if(lab) lab.textContent='③ 오답노트';
+  renderWnQuestion();
+}
+
+function renderWnQuestion(){
+  if(wnQueue.length===0){ finishWnStage(); return; }
+  const done=wnTotal-wnQueue.length;
+  const item=wnQueue[0];
+  document.getElementById('write-target-word').innerText=item.w;
+  setWriteHint(item);
+  setChoseong(item);
+  document.getElementById('write-answer-hint').innerText='';
+  const inp=document.getElementById('write-input');
+  inp.value=''; inp.className='write-input'; inp.disabled=false; inp.focus();
+  document.getElementById('write-submit-btn').classList.remove('hidden');
+  document.getElementById('write-next-btn').classList.add('hidden');
+  writeAnswerShown=false;
+  const pct=wnTotal>0?Math.round((done/wnTotal)*100):0;
+  document.getElementById('write-progress-bar').style.width=pct+'%';
+  document.getElementById('write-progress-text').innerText=`③ 오답노트 ${done+1} / ${wnTotal} · 100점 통과`;
+}
+
+function submitWnAnswer(){
+  const inp=document.getElementById('write-input');
+  const userInput=inp.value.trim(); if(!userInput) return;
+  const item=wnQueue[0];
+  const result=isSimilarEnough(userInput,item.m);
+  inp.disabled=true;
+  document.getElementById('write-submit-btn').classList.add('hidden');
+  document.getElementById('write-next-btn').classList.remove('hidden');
+  writeAnswerShown=true;
+  if(result.match){
+    inp.classList.add('correct-input');
+    const badge=result.type==='exact'
+      ?'<span class="similarity-badge badge-exact">완전 일치 ✓</span>'
+      :'<span class="similarity-badge badge-similar">유사 정답 ✓</span>';
+    document.getElementById('write-answer-hint').innerHTML=`정답: ${item.m} ${badge}`;
+    document.getElementById('write-answer-hint').style.color='var(--progress)';
+    wnCorrect++;
+    wnQueue.shift();
+  } else {
+    inp.classList.add('wrong-input');
+    document.getElementById('write-answer-hint').innerHTML=`정답: <b>${item.m}</b> <small>(틀리면 100점이 안 돼요)</small>`;
+    document.getElementById('write-answer-hint').style.color='var(--wrong)';
+    wrongLog[item.w]=(wrongLog[item.w]||0)+1; saveLocal();
+    wnQueue.shift();   // 이번 회차는 한 번씩만, 100점 아니면 회차 전체 재도전
+  }
+}
+
+function finishWnStage(){
+  const sc=Math.round((wnCorrect/Math.max(1,wnTotal))*100);
+  wnStageActive=false;
+  const r=getSetRec(currentSetIndex);
+  r.bestWn=Math.max(r.bestWn||0,sc);
+  if(sc>=100) r.wnPass=true;     // 100점이어야 통과
+  studyProgress[currentSetIndex]=r;
+  saveLocal(); createSetOptions(); updateHeaderStats();
+  showWnResult(sc);
+}
+
+function showWnResult(sc){
+  hideAll();
+  document.getElementById('result-view').classList.remove('hidden');
+  const passed=sc>=100;
+  const allCleared=isSetFullyCleared(currentSetIndex);
+  document.getElementById('result-title').innerText = passed?'🏆 오답노트 통과!':'③ 오답노트 결과';
+  const sb=document.getElementById('result-score-container');
+  sb.classList.remove('celebrate'); sb.innerText=`${sc}점`;
+  if(passed) sb.classList.add('celebrate');
+
+  let msg=`<b>[③ 오답노트] ${sc}점</b><br>`;
+  msg += passed
+    ? (allCleared ? '통과! ✅<br><b>🎉 SET 전체 완료! 다음 SET으로 이동할 수 있어요.</b>' : '통과! ✅')
+    : '<b>100점이어야 통과</b>해요. 틀린 단어를 한 번 더! 다시 도전하세요.';
+  document.getElementById('result-msg').innerHTML=msg;
+
+  const area=document.getElementById('result-next-area'); area.innerHTML='';
+  if(passed && allCleared){
+    const btn=document.createElement('button');
+    btn.className='main-btn'; btn.textContent='다음 SET으로 이동 →';
+    btn.onclick=moveToNextSet; area.appendChild(btn);
+  } else if(!passed){
+    const btn=document.createElement('button');
+    btn.className='main-btn'; btn.textContent='🔄 오답노트 다시 도전';
+    btn.onclick=startWrongNoteStage; area.appendChild(btn);
+  }
+  const backBtn=document.createElement('button');
+  backBtn.className='main-btn retry-btn'; backBtn.style.marginTop='6px'; backBtn.textContent='← 학습 화면으로';
+  backBtn.onclick=backToStudy; area.appendChild(backBtn);
+}
+
+// ==================== (복습시험 파트 제거됨) ====================
+
+function moveToNextSet(){
+  if((currentSetIndex+1)*10<ALL_WORDS.length) currentSetIndex++;
+  else { alert('모든 세트를 완료했습니다! 🎉'); currentSetIndex=0; }
+  saveLocal(); createSetOptions(); loadSet();
+}
+
+function resetAllProgress(){
+  if(confirm('모든 학습 기록과 오답 노트를 초기화하시겠습니까?')){
+    localStorage.clear(); studyProgress={}; wrongLog={};
+    currentSetIndex=0; createSetOptions(); loadSet(); alert('초기화되었습니다.');
+  }
+}
+
+// ==================== 초기화 ====================
+function migrateProgress(){
+  // 구버전(2단계)에서 mc+wr만 통과한 세트는 wnPass를 true로 인정(재잠금 방지)
+  let changed=false;
+  Object.keys(studyProgress).forEach(k=>{
+    if(/^\d+$/.test(k)){
+      const r=studyProgress[k];
+      if(r && r.mcPass && r.wrPass && r.wnPass===undefined){ r.wnPass=true; changed=true; }
+    }
+  });
+  if(changed) saveLocal();
+}
+window.onload=function(){
+  applyTheme(); migrateProgress(); loadLastPosition(); enforceSetLock(); createSetOptions(); loadSet();
+};
+</script>
+</body>
+</html>
