@@ -1,0 +1,2375 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>능률VOCA 어원편 (10개=1세트)</title>
+  <style>
+    :root { --primary:#2563eb; --success:#16a34a; --error:#dc2626; --bg:#f8fafc; }
+    * { box-sizing:border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Noto Sans KR", Arial, sans-serif;
+      background: var(--bg);
+      display:flex; flex-direction:column; align-items:center;
+      padding:12px; margin:0; color:#0f172a;
+    }
+    header {
+      width:100%; max-width:900px;
+      display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:14px; gap:10px;
+    }
+    h2 { margin:0; font-size:20px; font-weight:900; }
+    .reset-btn {
+      padding:8px 10px; background:#e2e8f0; border:none; border-radius:8px;
+      cursor:pointer; font-size:11px; font-weight:900; margin-right:6px;
+    }
+    #reviewBtn { background:#fee2e2; color:#dc2626; }
+    .nav-container { display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+    #bookNav { max-width:100%; }
+    .nav-pair { display:flex; align-items:center; gap:6px; white-space:nowrap; }
+    select {
+      padding:10px 12px; border-radius:10px; border:1px solid #cbd5e1;
+      font-weight:900; cursor:pointer; background:white; font-size:15px;
+    }
+    .container {
+      background:white; padding:20px; border-radius:18px;
+      box-shadow:0 10px 25px rgba(0,0,0,0.06);
+      width:100%; max-width:900px; text-align:center;
+      display:flex; flex-direction:column; justify-content:space-between; gap:14px;
+    }
+    .hidden { display:none !important; }
+    .word-list {
+      text-align:left; margin-bottom:10px; border-top:2px solid #f1f5f9;
+      max-height:55vh; overflow-y:auto; width:100%;
+    }
+    .word-item {
+      display:flex; justify-content:space-between; gap:12px; padding:12px;
+      border-bottom:1px solid #f1f5f9;
+    }
+    .word-item span:first-child { font-weight:900; color:var(--primary); font-size:1.15rem; word-break:keep-all; overflow-wrap:anywhere; flex-shrink:0; max-width:48%; }
+    .word-item span:last-child { color:#475569; font-weight:800; text-align:right; font-size:0.95rem; word-break:keep-all; overflow-wrap:anywhere; }
+    .quiz-header {
+      display:flex; justify-content:space-between; color:#64748b; font-weight:900; font-size:14px;
+    }
+    .quiz-word {
+      font-size: clamp(30px, 8vw, 44px);
+      font-weight:900; margin:10px 0 14px 0; color:#0f172a;
+      word-break:break-word; line-height:1.1;
+    }
+    .options-grid { display:flex; flex-direction:column; gap:10px; }
+    .option-btn {
+      padding:16px; border:2px solid #e2e8f0; border-radius:14px;
+      background:white; cursor:pointer; font-size:17px; font-weight:900;
+      transition:0.2s; text-align:left; line-height:1.25;
+    }
+    .option-btn.correct { background:var(--success) !important; color:white; border-color:var(--success); }
+    .option-btn.wrong { background:var(--error) !important; color:white; border-color:var(--error); }
+    .spell-input {
+      width:100%; padding:16px; border:3px solid #cbd5e1; border-radius:14px;
+      font-size:22px; text-align:center; font-weight:900; outline:none; transition:0.3s;
+    }
+    .spell-input:focus { border-color:var(--primary); }
+    .spell-hint {
+      font-size:22px; font-weight:900; color:var(--primary);
+      letter-spacing:3px; margin:0 0 12px 0; word-break:break-word;
+    }
+    .spell-hint .hint-label { font-size:13px; color:#64748b; letter-spacing:0; margin-right:8px; }
+    .spell-input.correct { border-color:var(--success); background:#f0fdf4; }
+    .spell-input.wrong { border-color:var(--error); background:#fef2f2; }
+    .main-btn {
+      width:100%; padding:15px; background:var(--primary); color:white; border:none;
+      border-radius:14px; font-size:18px; font-weight:900; cursor:pointer;
+    }
+    .next-btn { background:#334155; margin-top:6px; }
+    .praise { font-size:18px; font-weight:900; color:var(--success); min-height:28px; margin:10px 0 0 0; }
+    .review-badge { font-size:11px; background:#fee2e2; color:#ef4444; padding:2px 6px; border-radius:6px; margin-left:6px; font-weight:900; }
+    @media (max-width: 520px) {
+      header { flex-direction:column; align-items:flex-start; margin-bottom:10px; }
+      .nav-container { width:100%; justify-content:space-between; }
+      select { width:190px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h2>능률VOCA 어원편</h2>
+      <button class="reset-btn" id="reviewBtn" onclick="openReviewQuiz()">오답노트 복습</button>
+      <button class="reset-btn" onclick="resetAllData()">학습 기록 초기화</button>
+    </div>
+    <div class="nav-container">
+      <span class="nav-pair"><span style="font-size:14px; font-weight:900;">단어장:</span>
+      <select id="bookNav" onchange="changeBook(this.value)"></select></span>
+      <span class="nav-pair"><span style="font-size:14px; font-weight:900;">세트:</span>
+      <select id="setNav" onchange="changeSet(this.value)"></select></span>
+    </div>
+  </header>
+
+  <div id="studyView" class="container">
+    <div>
+      <h3 id="studyTitle">Set 1 학습 리스트</h3>
+      <p style="font-size:13px; color:#64748b; margin:0 0 10px 0;">암기 후 [문제 시작하기]를 눌러주세요.</p>
+      <div class="word-list" id="wordListContainer"></div>
+    </div>
+    <button class="main-btn" onclick="startQuiz()">문제 시작하기</button>
+  </div>
+
+  <div id="quizView" class="container hidden">
+    <div>
+      <div class="quiz-header">
+        <span id="quizMode">객관식</span>
+        <span id="progress">1 / 20</span>
+      </div>
+      <div class="quiz-word" id="targetWord">word</div>
+      <div class="options-grid" id="optionsContainer"></div>
+      <div id="spellContainer" class="hidden">
+        <div class="spell-hint" id="spellHint"></div>
+        <input type="text" id="spellInput" class="spell-input" placeholder="한국어 뜻을 입력하세요 (여러 뜻 중 하나만)" autocomplete="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter') submitSpelling();" />
+        <button class="main-btn" id="spellSubmitBtn" style="margin-top:10px;" onclick="submitSpelling()">확인</button>
+      </div>
+      <div id="quizFeedback" class="praise"></div>
+    </div>
+    <button id="nextQuestionBtn" class="main-btn next-btn hidden" onclick="goNext()">다음 문제로</button>
+  </div>
+
+  <div id="resultView" class="container hidden">
+    <div id="resultContent" style="margin-top:60px;"></div>
+    <div>
+      <button id="primaryResultBtn" class="main-btn" onclick="initStudy()">다시 학습</button>
+      <button id="nextSetBtn" class="main-btn" style="background:#64748b; margin-top:10px; opacity:0.4;" onclick="moveToNextSet()" disabled>다음 세트로</button>
+    </div>
+  </div>
+
+  <script>
+    const SET_SIZE = 10;
+    // ---------- 단어장(책) 3종: 선택한 단어장마다 학습 기록이 따로 저장됨 ----------
+    const BOOK_KEY = 'ne_voca_etym_book';
+    const BOOKS = {
+      day01: { label: "DAY 01~", data: [
+            {e:"progress", k:"진보, 발전/ 전진, 진행/ 진보하다, 발전하다/ 전진하다"},
+            {e:"propose", k:"제안하다/ 청혼하다/ (이론 등을) 제시하다"},
+            {e:"produce", k:"생산[제조]하다/ 농산물"},
+            {e:"protect", k:"보호하다, 막다, 지키다"},
+            {e:"purchase", k:"구매하다, 구입하다/ 구매, 구입"},
+            {e:"predict", k:"예언하다, 예측[예상]하다"},
+            {e:"precaution", k:"조심, 경계/ 예방책"},
+            {e:"premature", k:"시기상조의, 조급한/ 너무 이른, 조기의"},
+            {e:"preview", k:"미리보기, 사전 검토/ 시사(회), 시연, 예고편/ (시사, 시연 따위를) 보다[보여주다]"},
+            {e:"forehead", k:"이마"},
+            {e:"forefather", k:"선조, 조상"},
+            {e:"foremost", k:"가장중요한, 최고의/ 선두의, 맨 앞[먼저]의"},
+            {e:"foresee", k:"예견[예지]하다"},
+            {e:"postpone", k:"연기하다, 뒤로 미루다"},
+            {e:"postwar", k:"전후(戰後)의"},
+            {e:"income", k:"수입, 소득"},
+            {e:"intake", k:"섭취(량)"},
+            {e:"infection", k:"감염, 오염"},
+            {e:"insight", k:"통찰력"},
+            {e:"inherent", k:"내재된, 고유의"},
+            {e:"investment", k:"투자, 투자 자금"},
+            {e:"investigate", k:"수사[조사]하다/ 조사[연구]하다"},
+            {e:"illustrate", k:"설명하다, 삽화를 쓰다, 예시를 보여주다"},
+            {e:"outcome", k:"결과, 성과"},
+            {e:"outline", k:"개요/ 윤곽, 외형/ 개요를 서술하다/ 윤곽을 보여주다[나타내다]"},
+            {e:"outlook", k:"전망, 예측/ 견해, 사고방식/ 경치"},
+            {e:"outstanding", k:"뛰어난, 아주 훌륭한, 두드러진"},
+            {e:"outlet", k:"(가스, 감정 등의) 배출구, 표출 방법/ 상점, 아울렛/ (전기) 콘센트"},
+            {e:"utter", k:"완전한, 전적인/ 말하다/ (소리 등을) 내다"},
+            {e:"utmost", k:"최대의, 극도의"},
+            {e:"overcome", k:"(곤란, 장애, 적 등을) 극복하다, 이겨내다, 이기다"},
+            {e:"overlook", k:"간과하다, 못보고 넘어가다/ 눈감아 주다/ (경치 등을) 내려다보다"},
+            {e:"overseas", k:"해외로/ 해외에 있는, 외국의"},
+            {e:"overhead", k:"머리위에, (하늘) 높이/ 머리 위의"},
+            {e:"overtake", k:"능가하다/ 따라잡다, 추월하다/ (재난, 감정 등이) 덮치다, 압도하다"},
+            {e:"overwhelm", k:"압도하다/ 당황하게 하다/ 너무 많아 감당하기 힘들게 하다"},
+            {e:"overlap", k:"겹치다, 포개지다/ 중복되다, 공통점이 있다/ 겹침, 중복"},
+            {e:"overflow", k:"넘치다, 범람하다/ ~로 넘쳐나다/ 넘침, 범람/ 초과"},
+            {e:"extracurricular", k:"정규교과 과정 이외의, (클럽 활동 등) 과외의"},
+            {e:"extraterrestrial", k:"지구밖의, 외계의/ 외계인, 우주인"},
+            {e:"extraordinary", k:"이상한/ 비범한, 대단한"},
+            {e:"extrovert", k:"외향적인사람"},
+            {e:"external", k:"외부의, 밖의"},
+            {e:"misfortune", k:"불운, 불행, 역경"},
+            {e:"mislead", k:"잘못인도하다/ 속이다, 오해하게 하다"},
+            {e:"misbehave", k:"버릇없이 굴다/ 비행을 저지르다"},
+            {e:"recall", k:"기억해내다, 회상[상기]하다/ 상기시키다/ 회수[리콜]하다/ 기억/ 소환, 회수"},
+            {e:"record", k:"기록/ 음반/ 기록하다/ 녹음[녹화]하다"},
+            {e:"recover", k:"(건강, 기능 등을) 회복하다/ 되찾다, 회수하다"},
+            {e:"recycle", k:"재활용하다, 재생하다"},
+            {e:"research", k:"연구, 조사/ 연구[조사]하다"},
+            {e:"replace", k:"(~의 역할을) 대신하다/ 교체하다, 대체하다"},
+            {e:"reproduce", k:"생식[번식]하다/ 복제[복사]하다/ 재생[재현]하다"},
+            {e:"revive", k:"소생[회복]시키다/ 소생[회복]하다/ 되살아나게 하다/ 재상영[재상연]하다"},
+            {e:"remove", k:"제거하다, 옮기다, 이전[이동]시키다"},
+            {e:"retire", k:"은퇴[퇴직]하다/ 은퇴[퇴직]시키다"},
+            {e:"remain", k:"여전히~인 상태이다/ 머무르다, 체류하다/ 남아 있다, 남다"},
+            {e:"represent", k:"(법정, 의회 등에서) 대변하다, 대표하다/ 나타내다, 상징하다"},
+            {e:"international", k:"국제적인, 국가 간의"},
+            {e:"interpret", k:"통역하다/ 이해[해석]하다, 파악하다/ (자기 해석에 따라) 연주[연기]하다"},
+            {e:"interfere", k:"간섭하다/ 방해하다"},
+            {e:"interaction", k:"상호작용, 상호 영향"},
+            {e:"dialogue", k:"대화, 문답, 회화"},
+            {e:"dialect", k:"방언, 사투리"},
+            {e:"diameter", k:"지름, 직경"},
+            {e:"transfer", k:"이동(시키다)/ 전근[전학](하다)/ 전송(하다)/ 갈아타다/ 갈아타기"},
+            {e:"transform", k:"변형[변화]시키다"},
+            {e:"translate", k:"번역하다/ ~로 여기다, 해석하다"},
+            {e:"transplant", k:"옮겨심다/ (기관, 조직 등을) 이식하다/ 이식"},
+            {e:"depress", k:"낙담시키다, 우울하게 하다/ 불경기로 만들다"},
+            {e:"despise", k:"경멸하다, 얕보다"},
+            {e:"depart", k:"떠나다, 출발하다"},
+            {e:"derive", k:"이끌어내다, 얻다/ ~에서 유래하다, 파생되다"},
+            {e:"detect", k:"발견하다, 찾아내다"},
+            {e:"detach", k:"분리하다, 떼어내다"},
+            {e:"develop", k:"발전[발달]하다, 성장하다/ 개발하다"},
+            {e:"declare", k:"선언[발표]하다/ (세관 등에) 신고하다"},
+            {e:"debate", k:"토론, 논쟁/ 토론[논쟁]하다/ 숙고하다, 검토하다"},
+            {e:"demonstrate", k:"입증[증명]하다, 설명하다/ (행동으로) 보여주다/ 시위하다"},
+            {e:"depict", k:"(그림으로) 그리다/ (말로) 묘사하다"},
+            {e:"undergraduate", k:"대학생(의), 학부생(의)"},
+            {e:"undergo", k:"(변화, 곤란함 등을) 겪다, 경험하다"},
+            {e:"undertake", k:"(떠)맡다, ~의 책임을 지다/ (~하겠다고) 약속하다"},
+            {e:"underlie", k:"~의 기저를 이루다, 기본이 되다"},
+            {e:"exhale", k:"(숨을) 내쉬다, (공기, 가스 등을) 내뿜다"},
+            {e:"expand", k:"커지다, 팽창하다/ 확대[팽창]시키다/ (사업, 조직 등을) 확장[확대]하다"},
+            {e:"explicit", k:"뚜렷한, 명백한/ 노골적인, 숨김없는"},
+            {e:"explain", k:"설명하다, 해명하다"},
+            {e:"expose", k:"(햇볕, 위험, 특정 환경 등에) 노출시키다, 드러내다/ 폭로하다"},
+            {e:"exaggerate", k:"과장하다, 과장해서 말하다"},
+            {e:"exchange", k:"교환, 주고받기/ 환전/ 교환하다"},
+            {e:"exhaust", k:"지치게하다/ 다 써 버리다, 고갈시키다/ (자동차 등의) 배기가스"},
+            {e:"evaporation", k:"증발/ 발산"},
+            {e:"uneasy", k:"불안한, 걱정스러운/ 편치 않은, 불편한"},
+            {e:"unfair", k:"불공평한, 부당한"},
+            {e:"unfortunate", k:"불운한, 불행한/ 유감스러운"},
+            {e:"unlikely", k:"~할 것 같지 않은, 가망 없는"},
+            {e:"unusual", k:"보통이아닌, 평소와 다른/ 유별난, 색다른"},
+            {e:"unlock", k:"(문 등 잠긴 것을 열쇠로) 열다"},
+            {e:"disagree", k:"(의견이) 다르다/ 동의하지 않다/ (결과, 수치, 진술 등이) 일치하지 않다"},
+            {e:"disappear", k:"(시야에서) 사라지다, 없어지다/ (존재가) 없어지다, 소멸하다"},
+            {e:"disorder", k:"무질서, 혼란/ (심신의) 이상, 불편"},
+            {e:"discount", k:"할인/ 할인하다/ 중요하지 않게 생각하다"},
+            {e:"discourage", k:"그만두게하다, 단념시키다/ 낙담[실망]시키다"},
+            {e:"dismiss", k:"(의견, 생각 등을) 묵살[일축]하다/ 해고하다, 내쫓다/ (모임등을) 해산시키다"},
+            {e:"dispose", k:"배치[배열]하다/ 처분하다/ (문제 등을) 처리[해결]하다/ 경향을 갖게 하다"},
+            {e:"display", k:"전시[진열]하다/ (감정 등을) 보이다, 표현하다/ 전시, 진열/ 보이기, 표현"},
+            {e:"differ", k:"다르다/ (의견 등이) 일치하지 않다"},
+            {e:"independent", k:"독립한, 자주의/ 독립심이 강한"},
+            {e:"inevitable", k:"피할수 없는, 불가피한"},
+            {e:"inexpensive", k:"저렴한, 비싸지 않은"},
+            {e:"illegal", k:"불법의"},
+            {e:"immoral", k:"부도덕한"},
+            {e:"immune", k:"면역성을가진/ 면제된"},
+            {e:"irrelevant", k:"(~와) 관계가 없는, 상관없는"},
+            {e:"superior", k:"우수한, 보다 나은/ (~보다) 상위[상급]의/ 상급자"},
+            {e:"superb", k:"뛰어난, 멋진"},
+            {e:"superficial", k:"표면의, 외관상의/ 피상적인"},
+            {e:"sovereign", k:"통치자/ 주권이 있는/ 최고 권력의"},
+            {e:"surface", k:"표면/ 외관/ (수면으로) 올라오다/ 드러나다, 나타나다"},
+            {e:"uphold", k:"(법, 제도, 판결 등을) 지지하다, 옹호하다"},
+            {e:"upright", k:"똑바른/ 수직으로 세운/ (도덕적으로) 올바른, 정직한/ 똑바로, 수직으로/ 수직 기둥"},
+            {e:"upset", k:"기분이상한, 화난/ (위장 등이) 탈이 난/ (마음을) 상하게 하다/ 뒤집어엎다"},
+            {e:"upside", k:"위쪽, 윗면"},
+            {e:"submarine", k:"잠수함/ 해저의"},
+            {e:"suffer", k:"(고통 등을) 겪다, ~로 괴로워하다, (병 등을) 앓다"},
+            {e:"suggest", k:"제안[제의]하다/ 암시[시사]하다"},
+            {e:"support", k:"(의견, 사람 등을) 지지(하다)/ (금전적으로) 부양(하다)/ 받치다/ 받침"},
+            {e:"suppress", k:"진압하다/ 억제하다/ (감정 등을) 참다, 억누르다"},
+            {e:"antibiotic", k:"항생제, 항생 물질"},
+            {e:"antibody", k:"항체"},
+            {e:"antarctic", k:"남극의/ 남극 대륙"},
+            {e:"anticipate", k:"예상하다, 예측하다/ 기대하다"},
+            {e:"ancient", k:"고대의, 옛날의"},
+            {e:"advantage", k:"유리한조건[입장]/ 이점"},
+            {e:"ancestor", k:"조상, 선조"},
+            {e:"antique", k:"고대의, 옛날의/ 골동품"},
+            {e:"advance", k:"전진/ 진보/ 전진하다/ 진보하다/ 진보시키다"},
+            {e:"combine", k:"결합하다/ 결합되다/ 겸비하다"},
+            {e:"company", k:"회사/ 친구, 동료/ 일행, 동석, 동행"},
+            {e:"compile", k:"편집[편찬]하다/ (자료를) 수집하다"},
+            {e:"compose", k:"구성하다/ 작곡하다, (글을) 쓰다"},
+            {e:"compromise", k:"타협, 절충/ 타협[절충]하다"},
+            {e:"complain", k:"불평하다, 항의하다"},
+            {e:"conform", k:"(관습, 법, 규칙 등에) 순응하다, 따르다"},
+            {e:"confront", k:"(문제, 어려움 등에) 직면하다/ ~에 맞서다"},
+            {e:"confirm", k:"(예약 등을) 확인[확정]하다/ 확인해주다/ (~이 맞다고) 인정하다"},
+            {e:"condense", k:"농축[응축]시키다/ 농축[응축]되다/ (말, 글 등을) 간략하게 하다, 요약하다"},
+            {e:"correspond", k:"(~에) 해당[대응]하다/ 일치[부합]하다/ 서신을 주고받다"},
+            {e:"collapse", k:"붕괴되다, 무너지다/ (의식을 잃고) 쓰러지다/ 붕괴/ 쓰러짐/ 실패"},
+            {e:"symphony", k:"교향곡, 심포니"},
+            {e:"synthetic", k:"합성한, 인조의/ 종합적인"},
+            {e:"multimedia", k:"멀티미디어(의) (여러 매체를 사용한 커뮤니케이션)"},
+            {e:"multiple", k:"다수의, 다양한/ 배수의/ 배수"},
+            {e:"multitude", k:"다수/ 군중"},
+            {e:"absorb", k:"(액체, 기체를) 흡수하다/ (정보, 지식 등을) 받아들이다/ 열중하게 하다"},
+            {e:"abnormal", k:"비정상적인"},
+            {e:"absolute", k:"완전한, 전적인, 절대적인/ 확실한/ 전제적인, 무제한의"},
+            {e:"absurd", k:"어리석은, 터무니없는/ 불합리한"},
+            {e:"enable", k:"~할 수 있게 하다, 가능하게 하다"},
+            {e:"enforce", k:"(법률 등을) 시행[집행]하다/ 강요하다"},
+            {e:"enhance", k:"(질, 가치를) 향상하다"},
+            {e:"enlarge", k:"크게하다, 확장하다/ 확장되다"},
+            {e:"enrich", k:"(질, 가치, 빛깔, 맛 등을) 높이다, 풍부하게 하다/ 부유하게 하다"},
+            {e:"entitle", k:"자격[권리]을 주다/ 표제[명칭]를 붙이다"},
+            {e:"enclose", k:"(물건, 장소를) 둘러싸다/ 동봉하다"},
+            {e:"encounter", k:"(문제, 일에) 직면하다/ 우연히 만나다/ 우연한 만남"},
+            {e:"engage", k:"참여[관여]하다, 종사시키다/ (주의를) 끌다, 사로잡다/ 약속하다/ 약혼하다"},
+            {e:"embrace", k:"껴안다/ 수락하다, 받아들이다/ 포옹/ 수락"},
+            {e:"telescope", k:"망원경"},
+            {e:"autograph", k:"사인, 자필 서명/ 자필 서명하다"},
+            {e:"autobiography", k:"자서전"},
+            {e:"automobile", k:"자동차(의)"},
+            {e:"perfect", k:"완전(무결)한, 완벽한/ 완벽하게 하다"},
+            {e:"permanent", k:"영구적인, 불변의/ 오랫동안 지속되는/ 정규(직)의"},
+            {e:"persevere", k:"(끈질기게) 노력하다, 인내하다, 견디다"},
+            {e:"persist", k:"(어려움에도 불구하고) 계속 ~하다/ (주로 좋지 않은 일이) 지속하다, 존속하다"},
+            {e:"persuade", k:"설득하다, 권해서 ~하게 하다/ 믿게 하다, 납득시키다"},
+            {e:"perspective", k:"관점, 시각, 견해/ 균형 잡힌 관점, 사리분별(력)/ 원근법"},
+            {e:"separate", k:"분리된, 갈라진/ 별개의, 따로따로의/ 분리하다[되다], 갈라놓다[갈라지다]"},
+            {e:"secure", k:"안전한/ 확실한/ 확보하다/ 안전하게 하다, 위험으로부터 보호하다"},
+            {e:"select", k:"선택하다, 고르다"},
+            {e:"segregation", k:"(인종, 성별 등에 의한) 분리, 차별/ 분리, 격리"},
+            {e:"adjust", k:"맞추다, 조정[조절]하다/ 적응[순응]하다"},
+            {e:"accompany", k:"~와 동행하다/ (현상 등이) ~에 수반하여 일어나다/ (음악) 반주하다"},
+            {e:"account", k:"계좌/ 설명(하다)/ 계정/ 이유(를 밝히다), 원인(이 되다)/ (~의 비율을) 차지하다"},
+            {e:"accumulate", k:"(돈, 재산, 물건 등을) 모으다, 축적하다/ 모이다, 축적되다"},
+            {e:"accustomed", k:"(~에) 익숙해진, 습관이 된"},
+            {e:"appoint", k:"임명[지정]하다/ (시간, 장소를) 정하다"},
+            {e:"approach", k:"~에 접근하다[다가가다]/ 다가오다/ (문제 등을) 다루다/ 접근(법), 해결 방법"},
+            {e:"await", k:"기다리다, 대기하다"},
+            {e:"abandon", k:"(사람, 장소 등을) 버리다, 떠나다/ (계획, 생각, 신념 등을) 포기하다"},
+            {e:"arrogant", k:"거만한, 오만한"},
+            {e:"aboard", k:"(배, 기내, 기차 등에) 탑승[승선]하여/ (배, 열차, 항공기 등의) 안에서[으로]"},
+            {e:"abroad", k:"외국에, 해외로/ (소문 등이) 널리 퍼져"},
+            {e:"alike", k:"(아주) 비슷한, 서로 같은/ 마찬가지로, 같게, 동등하게"},
+            {e:"arise", k:"(문제, 사건 등이) 발생하다, 생기다/ (잠에서) 깨다, 일어나다"},
+            {e:"arouse", k:"(감정을) (불러) 일으키다/ (잠에서) 깨우다"},
+            {e:"amaze", k:"깜짝놀라게 하다"},
+            {e:"ashamed", k:"부끄러워하는, 창피한"},
+            {e:"afford", k:"~할 여유가 있다"},
+            {e:"withdraw", k:"철회[취소]하다/ 그만두다/ (예금을) 인출하다/ 물러나다, 철수하다"},
+            {e:"withhold", k:"(꼭 쥐고) 주지 않다/ (지원, 승낙 등을) 유보하다"},
+            {e:"withstand", k:"저항하다/ 견디다"},
+            {e:"geography", k:"지리학/ (특정 지역의) 지리, 지세"},
+            {e:"geology", k:"지질학/ (어떤 지역의) 지질학적 특징, 지질"},
+            {e:"geometry", k:"기하학"},
+            {e:"contrary", k:"(~와) 반대의/ 반대(되는 것)"},
+            {e:"contrast", k:"대조, 대비/ 정반대의 물건, 대조가 되는 것/ 대조[대비]하다/ 대조를 이루다"},
+            {e:"controversy", k:"논쟁, 언쟁, 논란"},
+            {e:"counterattack", k:"반격(하다), 역습(하다)"},
+            {e:"counterfeit", k:"위조의, 가짜의/ (화폐, 문서 등을) 위조하다"},
+            {e:"counterpart", k:"(직위, 목적 등이) 대응하는 사람, 상대(방)"},
+            {e:"monologue", k:"(혼자서만 하는) 긴 이야기/ (배우의) 독백"},
+            {e:"union", k:"(노동) 조합/ (동일한 관심사나 목표를 가진) 단체, 클럽/ 결합, 연합"},
+            {e:"unique", k:"특별한, 독특한/ 유일(무이)한/ (특정 장소, 사람, 사물에서) 특유의, 고유의"},
+            {e:"unify", k:"(갈라져 있던 것을) 통일하다, 통합하다"},
+            {e:"unite", k:"(본래 개별적인 것들을 하나로) 결합[통합]하다, 연합하다"},
+            {e:"unit", k:"구성단위, 측정 단위, 유닛/ 단일체, 한 개/ (병원, 군대 등의) 부문, 부(部)"},
+            {e:"universe", k:"우주, 만물/ 전 세계"},
+            {e:"bilingual", k:"2개 국어를 구사할 수 있는/ 2개 국어를 사용하는/ 2개 국어구사자"},
+            {e:"balance", k:"(양, 몸 등의) 균형, 평형/ 잔고, 잔액/ 균형을 잡다/ 상쇄하다/ (~와) 견주어 보다"},
+            {e:"duplicate", k:"(서류 등을) 복사[복제]하다/ (똑같이) 되풀이하다/ 복사의, 복제의/ 복사본, 복제품"},
+            {e:"twilight", k:"황혼, 땅거미, 어스름/ (전성기 뒤의) 황혼기, 쇠퇴기"},
+            {e:"twist", k:"(철사, 실 등을) 꼬다, 감다, (몸을) 틀다/ 왜곡하다/ 비틀기/ (강 등의) 굴곡"},
+            {e:"triangle", k:"삼각형(모양)/ (악기) 트라이앵글/ 삼각관계"},
+            {e:"tribe", k:"부족, 종족"},
+            {e:"trivial", k:"사소한, 하찮은"},
+            {e:"interviewer", k:"면접관, 인터뷰 진행자"},
+            {e:"interviewee", k:"면접[인터뷰] 대상자"},
+            {e:"inventor", k:"발명가"},
+            {e:"supervisor", k:"감독관, 관리자"},
+            {e:"assistant", k:"보조자, 조수/ 보조의, 하위 직급의"},
+            {e:"attendant", k:"시중드는사람/ 수행원"},
+            {e:"servant", k:"하인, 고용인"},
+            {e:"resident", k:"거주자/ 거주하는, 살고 있는"},
+            {e:"journalist", k:"언론인, 기자"},
+            {e:"psychologist", k:"심리학자"},
+            {e:"relative", k:"친척, 인척/ 상대적인"},
+            {e:"representative", k:"대표자, 대리인/ 대표하는"},
+            {e:"boundary", k:"경계선"},
+            {e:"secretary", k:"비서"},
+            {e:"missionary", k:"선교사, 전도사/ 전도의"},
+            {e:"economics", k:"경제학"},
+            {e:"politics", k:"정치(학)"},
+            {e:"physics", k:"물리학"},
+            {e:"appearance", k:"외모, 외관/ 등장, 출현, 출연"},
+            {e:"conference", k:"회담, 회견/ 회의, 협의회"},
+            {e:"variety", k:"다양성, 다양함"},
+            {e:"ability", k:"할수 있음, 능력"},
+            {e:"authority", k:"권한, 권위"},
+            {e:"discovery", k:"발견"},
+            {e:"theory", k:"이론, 학설"},
+            {e:"surgery", k:"수술"},
+            {e:"arrival", k:"도착"},
+            {e:"proposal", k:"제안/ 청혼"},
+            {e:"creature", k:"생물/ 창조물, 인간"},
+            {e:"failure", k:"실패(자), 낙제(자)"},
+            {e:"agreement", k:"협정/ 동의, 합의"},
+            {e:"assessment", k:"평가, 판단/ 평가액"},
+            {e:"document", k:"서류, 문서/ 기록하다"},
+            {e:"pollution", k:"오염, 공해"},
+            {e:"translation", k:"번역, 통역/ 해석"},
+            {e:"introduction", k:"소개/ 도입"},
+            {e:"invitation", k:"초대"},
+            {e:"wealth", k:"부, 재산/ 풍부함"},
+            {e:"weight", k:"무게, 체중"},
+            {e:"witness", k:"목격자, 입회인/ (법정에서) 증인/ 목격하다/ 증언하다"},
+            {e:"fitness", k:"건강(함)/ 적절함"},
+            {e:"accuracy", k:"정확(성), 정밀(도)"},
+            {e:"privacy", k:"사생활"},
+            {e:"citizenship", k:"시민권, 시민으로서의 신분"},
+            {e:"leadership", k:"통솔력, 지도력"},
+            {e:"childhood", k:"유년기"},
+            {e:"neighborhood", k:"근처, 이웃"},
+            {e:"realism", k:"현실주의/ 사실성"},
+            {e:"optimism", k:"낙관론, 낙천주의"},
+            {e:"criticism", k:"비판, 비난/ 비평, 평론"},
+            {e:"target", k:"목표, 대상/ 목표로 삼다, 대상으로 하다"},
+            {e:"booklet", k:"소책자"},
+            {e:"leaflet", k:"(광고용) 전단"},
+            {e:"etiquette", k:"예의, 에티켓"},
+            {e:"angle", k:"각도, 각/ 관점/ 노리다"},
+            {e:"label", k:"라벨, 표/ 라벨을[표를] 붙이다"},
+            {e:"childish", k:"유치한"},
+            {e:"childlike", k:"천진난만한"},
+            {e:"comparable", k:"비교될만한, 비슷한"},
+            {e:"comparative", k:"비교의, 비교적인, 상대적인"},
+            {e:"considerable", k:"(양, 정도 등이) 상당한, 많은"},
+            {e:"considerate", k:"사려깊은, 배려하는"},
+            {e:"continual", k:"반복[거듭]되는, 끊임없는"},
+            {e:"continuous", k:"끊임없는, 계속적인"},
+            {e:"economic", k:"경제(학)의"},
+            {e:"economical", k:"절약이되는, 경제적인"},
+            {e:"historic", k:"역사적으로중요한"},
+            {e:"historical", k:"역사(상)의"},
+            {e:"intellectual", k:"지적인, 지성의"},
+            {e:"intelligent", k:"(사람, 동물의 머리가) 영리한, 총명한"},
+            {e:"respectable", k:"존경할만한, 훌륭한"},
+            {e:"respectful", k:"존경[존중]하는, 공손한"},
+            {e:"sensible", k:"분별[지각] 있는, 현명한"},
+            {e:"sensitive", k:"섬세한/ 민감한, 예민한"},
+            {e:"social", k:"사회의, 사회적인"},
+            {e:"sociable", k:"사교적인, 붙임성 있는"},
+            {e:"successful", k:"성공적인, 출세한"},
+            {e:"successive", k:"연속[계속]적인"},
+            {e:"literal", k:"글자그대로의"},
+            {e:"literary", k:"문학의, 문예의"},
+            {e:"literate", k:"읽고쓸 줄 아는"},
+            {e:"imaginable", k:"상상할수 있는"},
+            {e:"imaginative", k:"상상력이풍부한, 창의적인"},
+            {e:"imaginary", k:"상상속에 존재하는, 가상의"},
+            {e:"regretful", k:"후회하는, 유감스러워 하는"},
+            {e:"regrettable", k:"(상황, 사건이) 유감스러운"},
+            {e:"industrial", k:"산업의, 산업이 발달한"},
+            {e:"industrious", k:"근면한"},
+            {e:"favorable", k:"호의적인, 찬성하는"},
+            {e:"reliable", k:"의지할수 있는, 믿을 만한"},
+            {e:"visible", k:"눈에보이는/ 뚜렷한"},
+            {e:"hopeful", k:"희망에찬, 기대하는"},
+            {e:"doubtful", k:"의심스러운, 확신이 없는"},
+            {e:"forceful", k:"(사람, 말 등이) 강력한, 힘이 있는"},
+            {e:"basic", k:"기초적인, 기본적인"},
+            {e:"characteristic", k:"특징적인, 독특한/ 특징"},
+            {e:"typical", k:"전형적인"},
+            {e:"familiar", k:"친근한"},
+            {e:"peculiar", k:"기이한, 독특한"},
+            {e:"supplementary", k:"보충의"},
+            {e:"satisfactory", k:"충분한, 만족스러운"},
+            {e:"costly", k:"값비싼/ 손실[희생]이 큰"},
+            {e:"timely", k:"시기적절한, 때를 맞춘"},
+            {e:"furious", k:"몹시화가 난/ 맹렬한"},
+            {e:"ambitious", k:"야심있는"},
+            {e:"fortunate", k:"운이좋은"},
+            {e:"intimate", k:"친밀한"},
+            {e:"pleasant", k:"즐거운, 기분 좋은"},
+            {e:"violent", k:"폭력적인, 난폭한/ 거센"},
+            {e:"urgent", k:"긴급한, 다급한"},
+            {e:"foolish", k:"어리석은"},
+            {e:"reddish", k:"발그레한, 불그스름한"},
+            {e:"selfish", k:"이기적인"},
+            {e:"ideal", k:"이상적인, 완벽한"},
+            {e:"verbal", k:"언어의, 말로 된"},
+            {e:"internal", k:"내부의, 내적인"},
+            {e:"racial", k:"인종의, 민족의"},
+            {e:"spiritual", k:"정신의, 정신적인"},
+            {e:"active", k:"활동적인/ 적극적인"},
+            {e:"informative", k:"유익한, 정보를 제공하는"},
+            {e:"hasty", k:"성급한, 서두르는"},
+            {e:"gloomy", k:"우울하게하는/ 우울한"},
+            {e:"countless", k:"셀수 없는, 무수히 많은"},
+            {e:"endless", k:"끝없는"},
+            {e:"realize", k:"깨닫다/ 실현하다"},
+            {e:"civilize", k:"문명화하다"},
+            {e:"fascinate", k:"매혹하다, 마음을 사로잡다"},
+            {e:"frustrate", k:"좌절감을주다, 불만스럽게 만들다/ (계획을) 좌절시키다"},
+            {e:"imitate", k:"모방하다/ (재미로) 따라하며 흉내내다"},
+            {e:"irritate", k:"짜증나게하다/ (피부를) 자극하다"},
+            {e:"motivate", k:"동기를부여하다, 자극하다"},
+            {e:"originate", k:"비롯되다, (~에서) 일어나다/ 발명[고안]하다"},
+            {e:"justify", k:"정당화하다, 옳다고 하다"},
+            {e:"simplify", k:"단순화하다, 간단하게 하다"},
+            {e:"strengthen", k:"강화하다/ 강화되다"},
+            {e:"frighten", k:"무섭게하다"},
+            {e:"struggle", k:"투쟁하다, 고군분투하다/ 투쟁, 분투"},
+            {e:"wrestle", k:"몸싸움하다, 레슬링을 하다"},
+            {e:"extremely", k:"극도로, 극히"},
+            {e:"rarely", k:"드물게, 거의 ~하지 않는"},
+            {e:"homeward", k:"집쪽으로, 집으로 향하는"},
+            {e:"upward", k:"위쪽으로"},
+            {e:"halfway", k:"가운데쯤에, 중간에"},
+            {e:"likewise", k:"똑같이, 비슷하게"},
+            {e:"otherwise", k:"달리, 다르게"},
+            {e:"agent", k:"대리인[점], 대행사/ (배우 등을 관리하는) 에이전트/ 정부 요원/ 매개(물), 요인"},
+            {e:"agony", k:"(정신적, 육체적으로) 극심한 고통, 슬픔"},
+            {e:"active", k:"활동적인/ 적극적인"},
+            {e:"actual", k:"실제의, 정확한, 진짜의"},
+            {e:"exact", k:"정확한, 꼼꼼한"},
+            {e:"react", k:"반응하다/ (음식, 약 등에) (거부) 반응을 나타내다, 반작용하다"},
+            {e:"ambiguous", k:"(애매)모호한, 분명하지 않은"},
+            {e:"navigate", k:"길을찾다/ 항해[비행]하다/ (어려운 상황 등을) 잘 다루다"},
+            {e:"altitude", k:"고도, 높이, 해발"},
+            {e:"abolish", k:"(법률, 제도, 관습 등을) 폐지하다, 없애다"},
+            {e:"adolescent", k:"사춘기청소년(의), 청년(의)"},
+            {e:"alter", k:"달라지다, 변하다/ 바꾸다, 변하게 하다"},
+            {e:"alternative", k:"대안(代案)의, 대체할 수 있는/ 대안(代案), 대체(물)"},
+            {e:"alien", k:"외국(인)의/ 이질적인/ 외계의/ (시민권 없이 거주하는) 외국인/ 우주인, 외계인"},
+            {e:"anguish", k:"극심한고통, 고뇌"},
+            {e:"anxious", k:"걱정하는, 불안해하는/ 갈망[열망]하는"},
+            {e:"anniversary", k:"(해마다 있는) 기념일"},
+            {e:"annual", k:"해마다의/ 일 년(간)의"},
+            {e:"apt", k:"~하는 경향이 있는, ~하기 쉬운/ 적절한"},
+            {e:"adapt", k:"적응시키다, 적합하게 하다/ 적응하다/ (소설, 극 등을) 각색하다, 개작하다"},
+            {e:"attitude", k:"(~에 대해 내비치는) 태도, 의견, 심정, 마음가짐/ 자세"},
+            {e:"artificial", k:"인공의, 모조의/ (태도, 행동 등이) 거짓된, 꾸며진"},
+            {e:"artistic", k:"예술[미술]의, 예술적인"},
+            {e:"disaster", k:"(뜻밖의) 재난, 참사, 큰 불행"},
+            {e:"astronomy", k:"천문학"},
+            {e:"astronaut", k:"우주비행사"},
+            {e:"astrology", k:"점성학, 점성술"},
+            {e:"consider", k:"숙고하다/ (~로) 여기다, 간주하다/ 고려[참작]하다, (타인, 감정을) 존중[배려]하다"},
+            {e:"audience", k:"청중, 관객, 시청자, 청취자"},
+            {e:"obey", k:"(~에) 복종하다, 따르다"},
+            {e:"bandage", k:"붕대(를 감다)"},
+            {e:"bond", k:"결속, 유대/ 채권/ 접착제, 본드/ 유대를 맺다/ 접착시키다"},
+            {e:"bundle", k:"다발, 꾸러미"},
+            {e:"bind", k:"묶다/ 결속시키다/ (약속, 의무 등으로) 속박[제한]하다, ~하게 하다"},
+            {e:"bar", k:"주점/ 막대/ (비누 같은) 긴 토막/ 장애(물)/ 법원, 법정/ 막다, 금하다"},
+            {e:"embarrass", k:"당황하게하다, 난처하게 하다"},
+            {e:"barrier", k:"울타리/ 장애물, 장벽"},
+            {e:"biography", k:"전기, 일대기"},
+            {e:"biology", k:"생물학"},
+            {e:"capital", k:"수도, 중심지/ 대문자/ 자본(금)/ 대문자의/ 주요한"},
+            {e:"chief", k:"우두머리, 장(長)/ 주요한, 중요한/ (지위, 계급 등에 있어) 최고의, 우두머리의"},
+            {e:"achieve", k:"(일, 목적 등을 노력하여) 이루다, 성취하다, 달성하다"},
+            {e:"capable", k:"~할 수 있는/ 유능한"},
+            {e:"capture", k:"생포(하다)/ 점령(하다)/ (마음 등을) 사로잡다/ 기록[포착]하다, 캡쳐(하다)"},
+            {e:"occupy", k:"차지하다/ (방, 건물 등을) 사용하다/ 점령[점거]하다"},
+            {e:"participate", k:"(~에) 참가[참여]하다"},
+            {e:"accept", k:"수락하다/ (설명, 학설 등을) 믿다, 인정하다/ 구성원으로 받아들이다"},
+            {e:"except", k:"~을 제외하고, ~ 이외에는"},
+            {e:"conceive", k:"생각해내다, 착상하다, 고안하다/ (특정한 상황 등을) 상상하다/ 임신하다"},
+            {e:"deceive", k:"속이다, 기만하다"},
+            {e:"perceive", k:"인지하다, 알아차리다"},
+            {e:"receive", k:"받다, 수령하다/ (제안, 의견 등을) 받아들이다, (전화, 방송 등을) 수신하다"},
+            {e:"career", k:"(오래 해온 전문적) 직업/ 경력, 커리어/ 직업적인"},
+            {e:"carpenter", k:"목수"},
+            {e:"carriage", k:"마차/ 운반/ (기차의) 객차"},
+            {e:"carrier", k:"운송회사/ 운반인, 운반[수송]기/ (의학)(전염병) 보균자"},
+            {e:"charge", k:"요금(을 청구하다)/ 고발[기소](하다)/ 비난(하다)/ 책임(을 지우다)/ 충전하다"},
+            {e:"discharge", k:"해임(하다)/ 내보내다/ 방출(하다)/ (의무 등을) 이행(하다)/ 퇴원/ 석방/ 제대/"},
+            {e:"cast", k:"드리우다/ (시선을) 던지다/ 배우를 정하다/ 출연진/ 깁스/ 주조물/ 던지기"},
+            {e:"broadcast", k:"방송하다, 방영하다/ 방송, 방영(물)"},
+            {e:"forecast", k:"예상[예측]하다, 예보하다/ 예상[예측], 예보"},
+            {e:"cause", k:"원인, 이유/ 야기하다, 초래하다"},
+            {e:"accuse", k:"(범죄 등의 혐의로) 고발[기소]하다/ 비난하다"},
+            {e:"excuse", k:"용서하다, 봐주다/ 변명하다, 변명이 되다/ 양해를 구하다/ 변명, 이유"},
+            {e:"precede", k:"~보다 먼저 일어나다, ~에 선행하다, ~보다 앞서가다"},
+            {e:"exceed", k:"(수, 양, 한도, 권한 등을) 넘다, 초과하다"},
+            {e:"proceed", k:"계속하다, 진행하다/ 계속되다, 진행되다/ 나아가다"},
+            {e:"succeed", k:"(~에) 성공하다, 성과를 거두다/ 뒤를 잇다, 계승하다"},
+            {e:"predecessor", k:"전임자"},
+            {e:"access", k:"접근(성), 이용(성)/ 진입[접근] 방법/ 입수하다, 접근하다, 들어가다"},
+            {e:"cease", k:"그만두다, 멈추다/ 끝나다"},
+            {e:"concentrate", k:"집중[전념]하다/ (인구 등을 한 곳에) 모으다, 집중시키다[모이다, 집중하다]"},
+            {e:"concern", k:"걱정, 염려/ 관심사/ 관계/ 걱정하다[시키다]/ 관심을 갖다/ (~에) 관계하다"},
+            {e:"discern", k:"알아차리다, 인식하다/ 분별[분간]하다"},
+            {e:"crisis", k:"위기, 어려운 상황, 최악의 국면"},
+            {e:"criticize", k:"비판[비난]하다/ 비평하다"},
+            {e:"discriminate", k:"차별(대우)하다/ (차이점을) 식별[구별]하다"},
+            {e:"certain", k:"확실한, 틀림없는/ (어느) 일정한, 특정한/ 어떤"},
+            {e:"certificate", k:"증명서, 이수[수료] 증명서"},
+            {e:"charity", k:"자선단체, 자선/ 관대함"},
+            {e:"cherish", k:"소중히생각하다, 아껴주다"},
+            {e:"accident", k:"사고, 재난/ 우연한 일"},
+            {e:"coincidence", k:"우연/ (우연의) 일치"},
+            {e:"incident", k:"(특히 폭력적이거나 위험한) 사건"},
+            {e:"casual", k:"느긋한, 무관심한/ 격식을 차리지 않는, 평상시의/ 우연한, 뜻하지 않은/ 평상복"},
+            {e:"occasion", k:"(특정한) 때, 경우/ 특별한 일[행사]"},
+            {e:"decay", k:"썩다, 부식[부패]하다/ 쇠퇴하다/ 부패/ 쇠퇴"},
+            {e:"suicide", k:"자살"},
+            {e:"decision", k:"결정/ 결단력"},
+            {e:"precise", k:"(수치, 정보 등이) 정확한, 정밀한"},
+            {e:"circulate", k:"돌다, 순환하다/ (소문, 정보 등이) 퍼지다/ (물건 등을) 유통[유포/배포]하다"},
+            {e:"circumstance", k:"주위사정, 상황/ (경제적, 물질적) 환경, 처지"},
+            {e:"circuit", k:"순회(여행)/ 주위, 둘레/ (전기) 회로"},
+            {e:"cite", k:"(예시, 근거로서) 언급하다/ (책 등을) 인용하다/ (법정으로) 소환하다"},
+            {e:"recite", k:"낭송[낭독]하다"},
+            {e:"excite", k:"흥분시키다, (남을) 자극하다"},
+            {e:"civil", k:"시민의, 민간인의/ (법률) 민사의"},
+            {e:"civilize", k:"문명화하다"},
+            {e:"citizen", k:"시민/ 국민"},
+            {e:"claim", k:"(권리, 소유권, 사실 여부 등을) 주장(하다)/ (손해 배상 등을) 요구[청구](하다)"},
+            {e:"exclaim", k:"외치다, 큰 소리로 말하다"},
+            {e:"proclaim", k:"(공식적으로) 선언하다, 공표하다"},
+            {e:"council", k:"협의회, 심의회/ 지방 의회"},
+            {e:"decline", k:"감소[하락]하다/ 악화되다/ (정중히) 거절하다, 사양하다/ 감소, 하락/ 쇠퇴, 악화"},
+            {e:"incline", k:"~할 마음이 내키게 하다/ (특정한 방향으로) 기울다/ 기울이다"},
+            {e:"climate", k:"(특정 지역의) 기후/ (어떤 지역, 시기의) 풍토, 풍조, 분위기"},
+            {e:"conclude", k:"결론을내리다/ 결말짓다, 종결하다"},
+            {e:"include", k:"포함[함유]하다/ 넣다, (전체의 일부로서) 포함시키다"},
+            {e:"exclude", k:"(고의로) 제외하다, 배제하다, 배척하다/ (참여, 입장 등을) 막다"},
+            {e:"closet", k:"(붙박이형) 벽장"},
+            {e:"disclose", k:"들추어내다, 폭로하다/ 드러내다"},
+            {e:"recognize", k:"알아보다, 식별[분간]하다/ (사실, 권위, 중요성 등을) 인정하다"},
+            {e:"diagnose", k:"진단하다, (병 등의) 원인을 규명하다"},
+            {e:"ignore", k:"(의도적으로) 무시하다"},
+            {e:"noble", k:"(성품, 행위 등이) 고상한, 숭고한/ 귀족의/ 귀족"},
+            {e:"acknowledge", k:"(사실, 중요성, 권위 등을) 인정하다/ 사례[감사]하다/ (선물등을) 받았음을 알리다"},
+            {e:"acquaint", k:"(정보 등을) 주다, 숙지시키다"},
+            {e:"discord", k:"(의견 등의) 불일치, 불화/ 불협화음"},
+            {e:"accord", k:"부여하다/ 부합하다, 일치하다/ (생각 등에 대한) 일치/ 협정"},
+            {e:"courage", k:"용기, 대담함"},
+            {e:"encourage", k:"용기를북돋우다/ (~하는 것을) 장려하다, 조장하다"},
+            {e:"core", k:"핵심, 가장 중요한 부분/ (사물의) 심, 속/ 핵심의, 가장 중요한, 가장 기본적인"},
+            {e:"corporate", k:"회사[법인]의/ 단체의, 공동의"},
+            {e:"incorporate", k:"법인으로만들다/ 포함하다, 합병하다"},
+            {e:"corps", k:"(군대) 군단, 단(團)/ (특정 일, 활동을 하는) 단체"}
+      ] },
+      day30: { label: "DAY 30~", data: [
+            {e:"legal", k:"법률(상)의/ 합법적인"},
+            {e:"privilege", k:"특권, 특전/ 특권을[특혜를] 주다"},
+            {e:"delegate", k:"(권한, 임무 등을) 위임하다/ 대표로 임명[파견]하다/ 대표자, 대리인"},
+            {e:"legacy", k:"유산, 유물, 물려받은 것"},
+            {e:"colleague", k:"(직장) 동료"},
+            {e:"loyal", k:"충성스러운, 충실한"},
+            {e:"elevate", k:"(지위, 수준, 압력 등을) 높이다, 향상하다, 승진시키다/ (들어)올리다"},
+            {e:"relevant", k:"(당면 문제와) 관계가 있는, 관련된"},
+            {e:"relieve", k:"(고통, 고민 등을) 경감[완화]하다"},
+            {e:"liberal", k:"(의견, 생각 등이) 관대한, 개방적인/ 자유[진보]주의의/ 인색하지 않은, 후한"},
+            {e:"liberate", k:"자유롭게하다, 해방[석방]하다"},
+            {e:"deliver", k:"배달하다, 전하다/ 강연[연설]하다/ 분만하다[시키다]/ (약속등을) 이행하다"},
+            {e:"oblige", k:"(~하도록) 의무를 지우다, 강요하다/ (도움 등을) 베풀다, (요청받은 것을) 해주다"},
+            {e:"religion", k:"종교, 신조"},
+            {e:"ally", k:"동맹[결연]을 맺다, 지지하다/ 동맹[연합]국, 동맹[협력]자"},
+            {e:"rally", k:"모으다, 모이다/ (기력, 시장 상황 등이) 회복되다/ 집회, 대회/ (주가 등의) 회복"},
+            {e:"rely", k:"의지하다, 믿다"},
+            {e:"liable", k:"책임을져야 할, 법적 책임이[의무가] 있는/ ~하는 경향이 있는, ~하기 쉬운"},
+            {e:"eliminate", k:"제거하다, 없애다"},
+            {e:"preliminary", k:"예비[준비]의, 서두의/ 예비[준비], 서두"},
+            {e:"limit", k:"(양, 속도 등의) 제한(선)/ 경계/ 한계(량), 극한, 최대치/ 제한[한정]하다"},
+            {e:"literal", k:"(의미 등이) 글자 그대로의/ (번역 등이) 원문에 충실한"},
+            {e:"literate", k:"읽고쓸 줄 아는"},
+            {e:"literature", k:"문학/ 문헌"},
+            {e:"local", k:"(그) 지역의, 지방의, 현지의 / 국부(전체 중 일부)의/ (특정 지역의) 주민, 현지인"},
+            {e:"locate", k:"~의 위치[장소]를 파악하다/ ~의 위치를 ~에 정하다, 두다, 설치하다"},
+            {e:"allocate", k:"(임무, 자금, 시간 등을) 할당하다, 배분하다"},
+            {e:"logic", k:"논리(학), 논법"},
+            {e:"apology", k:"사과, 사죄"},
+            {e:"prologue", k:"머리말, 프롤로그/ 전조, 발단"},
+            {e:"ecology", k:"생태학, 생태계"},
+            {e:"psychology", k:"심리학/ 심리 (상태)"},
+            {e:"long", k:"간절히바라다/ 긴, 오랜/ 길게, 오랫동안"},
+            {e:"belong", k:"(~에) 속하다, ~의 것이다 / (~에 대한) 소속감이 들다"},
+            {e:"prolong", k:"연장하다, 지속시키다, 늘리다"},
+            {e:"length", k:"길이, 세로/ 기간"},
+            {e:"linger", k:"오래머무르다, (오랜 기간) 지속되다"},
+            {e:"illusion", k:"(사람, 상황에 대한) 착각, 오해/ 환영, 환각"},
+            {e:"delusion", k:"(스스로의) 망상, 착각"},
+            {e:"magnitude", k:"(크기나 범위 등이) 거대함, 규모/ 중요함, 중대성/ (별의) 광도, (지진의) 진도"},
+            {e:"magnify", k:"확대하다, 크게 (보이게) 하다/ (크기, 중요성 등을) 과장하다"},
+            {e:"master", k:"대가/ 주인/ 석사 (학위)/ 원판/ 뛰어난/ 정통[숙달]하다/ 억제하다/ 지배하다"},
+            {e:"masterpiece", k:"(최고) 걸작, 대표작, 명작"},
+            {e:"major", k:"(더) 중요한, 주된/ (음악) 장조의/ (군대) 소령/ 전공/ 전공하다"},
+            {e:"mayor", k:"시장"},
+            {e:"majestic", k:"위엄있는, 장엄한"},
+            {e:"maximum", k:"최대(의), 최고(의)"},
+            {e:"demand", k:"요구[요청]하다, 청구하다/ 요구/ 수요"},
+            {e:"command", k:"명령[지시](하다)/ 지휘[통제](하다)/ (존경, 관심 등을) 받다/ (경치가) 내려다보이다"},
+            {e:"mandate", k:"명령하다, (법률로) 규정하다/ 위임하다/ 권한, 위임/ 명령, 지시, 규정"},
+            {e:"recommend", k:"(~하도록) 권하다/ 추천하다"},
+            {e:"manual", k:"육체노동의/ 수동의/ 소형 책자, 안내서"},
+            {e:"manuscript", k:"원고/ 손으로 쓴 책[문서], 사본"},
+            {e:"maintain", k:"유지하다, 지속하다/ 주장하다, 단언하다/ (가족 등을) 부양하다"},
+            {e:"manipulate", k:"(사람, 여론 등을) (부정하게) 조종하다, 조작하다/ (기계 등을) 잘 다루다"},
+            {e:"manage", k:"관리[경영]하다/ (어려운 일, 문제 등을) 어떻게든 (결국) 해내다"},
+            {e:"mechanism", k:"기계장치/ 방법/ 구조, 기제"},
+            {e:"mechanic", k:"기계공, 수리공"},
+            {e:"machinery", k:"기계류"},
+            {e:"medium", k:"(전달 등의) 매개(물), 매체, 수단/ 중간의/ (스테이크가) 중간정도로 구워진"},
+            {e:"medieval", k:"중세의, 중세풍의"},
+            {e:"mediate", k:"조정[중재]하다, 화해시키다"},
+            {e:"immediate", k:"즉시의, 즉각의/ 시급한, 당면한"},
+            {e:"intermediate", k:"중급의/ 중간의, 중간 단계의/ (학생, 선수 등) 중급자"},
+            {e:"mean", k:"의미하다/ 의도하다/ 비열한, 못된/ 인색한/ (신분이) 천한, 초라한/ 평균의"},
+            {e:"meanwhile", k:"그동안에, 이럭저럭 하는 사이에/ 한편으로는"},
+            {e:"memory", k:"기억(력), 추억/ 기념, 추모/ (컴퓨터) 메모리, 기억 장치"},
+            {e:"remember", k:"기억하다/ 상기하다, 생각해내다"},
+            {e:"mental", k:"정신의, 마음의"},
+            {e:"mention", k:"언급/ 언급[거론]하다, ~에 대해 말하다"},
+            {e:"remind", k:"(해야 할 일을) 상기시키다, 일깨워주다/ (과거의 사건, 사람등을) 생각나게 하다"},
+            {e:"comment", k:"의견(을 말하다), 논평(하다)"},
+            {e:"monument", k:"기념물, 기념관"},
+            {e:"monitor", k:"화면, 모니터/ 감시(자), 관찰(자)/ 감독[감시]하다, 관찰하다"},
+            {e:"summon", k:"호출하다, (법원에) 소환하다/ (회의 등을) 소집하다"},
+            {e:"commerce", k:"상업, 무역"},
+            {e:"merchant", k:"상인, 무역상"},
+            {e:"mercy", k:"자비, 관용"},
+            {e:"merge", k:"결합하다, 합병하다, 융합하다"},
+            {e:"emerge", k:"(모습이) 드러나다/ (사실이) 알려지다, 부각되다"},
+            {e:"submerge", k:"잠수하다, 잠기다/ 잠그다/ (감정, 의견 등을) 완전히 감추다"},
+            {e:"measure", k:"조치, 대책/ 척도, 기준/ (많은) 양, 정도/ 재다, 측정하다/ 판단하다, 평가하다"},
+            {e:"dimension", k:"(길이, 높이, 폭 등의) 치수, 크기/ 측면/ (수학, 물리) 차원"},
+            {e:"immense", k:"거대한, 매우 큰"},
+            {e:"migrate", k:"(사람이) 이주하다, (동물, 새 등이 계절에 따라) 이동하다"},
+            {e:"immigrate", k:"(다른 나라에서) 이민 오다, 이주해 오다"},
+            {e:"emigrate", k:"(다른 나라로) 이민 가다, 이주하다"},
+            {e:"minor", k:"작은, 적은, 덜 중요한/ (음악) 단조의/ 미성년자/ 부전공"},
+            {e:"minister", k:"성직자, 목사/ (한국, 유럽 등의) 장관"},
+            {e:"administer", k:"경영[운영]하다, 관리하다/ (법을) 집행하다/ (약 등을) 주다, 투여하다"},
+            {e:"diminish", k:"감소하다, 줄다/ 감소시키다, 줄이다"},
+            {e:"prominent", k:"저명한, 중요한/ 눈에 띄는, 잘 보이는/ 돌출한"},
+            {e:"imminent", k:"긴박한, (위험, 재난 등이) 곧 일어날 것 같은"},
+            {e:"eminent", k:"저명한, 존경받는, 중요한"},
+            {e:"minimum", k:"최소(의), 최저(의)"},
+            {e:"miracle", k:"기적, 놀라운 일"},
+            {e:"admire", k:"존경하다, 찬양하다/ (감탄하며) 바라보다"},
+            {e:"marvelous", k:"(매우) 훌륭한, 재미있는, 흥미로운"},
+            {e:"admit", k:"(사실, 비난 등을) 시인[인정]하다/ 입장[입학]을 허가하다"},
+            {e:"commit", k:"범하다, 저지르다/ 약속[서약]하다/ (감옥, 병원 등에) 보내다"},
+            {e:"committee", k:"위원회"},
+            {e:"emit", k:"(가스, 빛, 열 등을) 내뿜다, 방출하다"},
+            {e:"omit", k:"생략하다, 빠뜨리다"},
+            {e:"permit", k:"허락하다, 용인하다/ 허가증"},
+            {e:"submit", k:"제출하다/ (법, 권위 등에) 복종[굴복]하다"},
+            {e:"transmit", k:"전송하다, 전하다/ (빛, 열, 소리 등을) 전도하다, 투과시키다"},
+            {e:"mission", k:"임무, 사명/ (조직, 개인 등의) 목표/ (정부,종교) 사절(단)"},
+            {e:"commission", k:"위원회/ 수수료, 커미션/ 위임(장)/ 의뢰[주문]하다/ 위임하다, 권한을 주다"},
+            {e:"mess", k:"더러움, 어수선함, 혼란 (상태)/ 엉망진창으로 만들다"},
+            {e:"moderate", k:"중간의/ 온건한, 도를 지나치지 않는/ 누그러뜨리다, 완화하다[되다]"},
+            {e:"modernize", k:"현대[근대]화하다, 현대식으로 만들다"},
+            {e:"modest", k:"겸손한/ 별로 많지[크지] 않은, 별로 비싸지 않은"},
+            {e:"modify", k:"변경하다, 수정하다/ (문법) 수식하다"},
+            {e:"accommodate", k:"숙박시키다/ 수용하다/ ~의 편의를 도모하다/ 적응하다[시키다]"},
+            {e:"commodity", k:"상품, 판매상품"},
+            {e:"mold", k:"(주조용의) 형(型), 틀/ 곰팡이/ 틀에 넣어 만들다/ (성격, 태도등을) 형성하다"},
+            {e:"mortal", k:"죽을운명의/ (병, 상처가) 치명적인/ 인간"},
+            {e:"mortgage", k:"저당(권), 저당 잡히기/ 융자(금)/ 저당 잡히다"},
+            {e:"murder", k:"살인(죄), 살해/ 죽이다, 살인하다"},
+            {e:"move", k:"움직이다, 이동(하다)/ 이사하다/ 진행[진척]되다/ 감동시키다/ 조치, 행동"},
+            {e:"motive", k:"움직이게하는, 원동력이 되는/ (행위의) 동기, 자극"},
+            {e:"motion", k:"움직임, 흔들림/ 동작/ 동작을 하다"},
+            {e:"emotion", k:"감정, 정서"},
+            {e:"promote", k:"장려[촉진]하다/ 승진[승격]시키다/ (상품, 행사 등을) 홍보하다"},
+            {e:"remote", k:"동떨어진, 외진/ (시간, 관계 등이) 먼/ (가능성이) 희박한/ 원격 조정의"},
+            {e:"moment", k:"순간, 찰나/ (특정한) 때, 시기"},
+            {e:"community", k:"(지역) 공동체/ 단체, 모임, 커뮤니티"},
+            {e:"communicate", k:"(생각, 감정, 정보 등을) 전달하다, 의사소통하다"},
+            {e:"common", k:"일반의, 흔한, 보통의/ 공통의, 공동의/ 공통(점)"},
+            {e:"mutual", k:"상호간의, 서로의, 공통의"},
+            {e:"commute", k:"(정기적으로) 통근하다/ 통근[통학] (시간)"},
+            {e:"native", k:"출생지의, 원주민(의)/ 토박이(의)/ 선천적인, 고유의"},
+            {e:"nation", k:"국가, 나라/ 국민, 민족"},
+            {e:"nature", k:"자연(계)/ 성질, 특징, 천성"},
+            {e:"innate", k:"선천적인, 타고난"},
+            {e:"negative", k:"부정적인/ 반대하는/ 음성의, 음극의, 음수의/ 부정, 반대"},
+            {e:"deny", k:"부인[부정]하다/ 거절하다"},
+            {e:"neutral", k:"중립의/ (색, 모음, 성질 등이) 중간의/ 중립인 것, 중립국"},
+            {e:"norm", k:"표준, 기준/ 평균, 정상"},
+            {e:"enormous", k:"거대한, 엄청나게 큰, 막대한"},
+            {e:"notable", k:"주목할만한, 탁월한"},
+            {e:"notice", k:"주목, 주의/ 게시(물), 공고, 안내(판)/ 통지(서), 통보/ 알아차리다/ 주목하다"},
+            {e:"notify", k:"알리다, 통보하다"},
+            {e:"notion", k:"관념, 개념, 생각"},
+            {e:"announce", k:"(공식적으로) 발표하다, 알리다"},
+            {e:"pronounce", k:"발음하다/ 선언하다, 선고하다"},
+            {e:"novel", k:"(장편) 소설/ 새로운, 기발한"},
+            {e:"innovate", k:"혁신하다, 쇄신하다"},
+            {e:"renew", k:"갱신하다, ~의 기한을 연장하다/ 재개하다"},
+            {e:"numeral", k:"숫자를나타내는/ 숫자"},
+            {e:"numerous", k:"많은, 다수의"},
+            {e:"innumerable", k:"셀수 없이 많은"},
+            {e:"nutrition", k:"영양분(섭취)"},
+            {e:"nourish", k:"영양분을주다/ (능력 등을) 육성[조성]하다"},
+            {e:"nurse", k:"간호사/ 유모/ 간호하다, 돌보다"},
+            {e:"nurture", k:"양육[양성/육성](하다)/ 영양분/ (계획, 아이디어 등을) 품다"},
+            {e:"melody", k:"멜로디, 선율, 가락"},
+            {e:"tragedy", k:"비극, 비극적 사건"},
+            {e:"operate", k:"작동하다/ 작동시키다/ (사업체 등이) 영업[작업]하다/ 수술하다"},
+            {e:"cooperate", k:"협력하다, 협동하다, 협조하다"},
+            {e:"option", k:"선택(권), 선택의 자유/ (학교의) 선택 과목/ (자동차, 컴퓨터등의) 옵션"},
+            {e:"adopt", k:"입양하다, 양자로 삼다/ (의견, 방법, 계획 등을) 채택하다"},
+            {e:"opinion", k:"의견, 생각, 견해"},
+            {e:"ordinary", k:"보통의, 평범한, 통상적인"},
+            {e:"subordinate", k:"~을 하위에 놓다/ (지위, 계급이) 하위의, 하급의/ 부차[부수]적인/ 하급자"},
+            {e:"coordinate", k:"조직화[동등화]하다/ 조정하다/ 꾸미다/ 동등한 (것[사람])/ 잘 조화되어 있는 것"},
+            {e:"origin", k:"기원, 유래/ 출신"},
+            {e:"orient", k:"(일정 방향으로) 향하게 하다/ 적응시키다"},
+            {e:"prepare", k:"준비하다, 대비하다"},
+            {e:"apparatus", k:"기구, 기계, 장치/ (정치 활동 등의) 조직"},
+            {e:"repair", k:"수리[수선]하다/ 바로잡다/ 수리, 수선, 보수"},
+            {e:"emperor", k:"황제, 제왕"},
+            {e:"imperial", k:"제국의, 황제의"},
+            {e:"transparent", k:"투명한, 비치는/ 명쾌한, 명백한, 이해하기 쉬운"},
+            {e:"apparent", k:"명백한/ 외견상의, 겉모양만의"},
+            {e:"appear", k:"~처럼 보이다, ~인 것 같다/ (장소, TV, 법정 등에) 나타나다, 출현[출연]하다"},
+            {e:"compare", k:"비교하다, 견주다/ 비유하다"},
+            {e:"peer", k:"동료, (나이, 능력, 신분 등이) 동등한 사람/ 응시하다, 자세히들여다보다"},
+            {e:"partial", k:"부분적인/ 불공평한, 편파적인/ 편애하는, (어떤 것을 특히) 좋아하는"},
+            {e:"particle", k:"소량, 미량, 작은 조각/ (물리) 소립자"},
+            {e:"particular", k:"특정한/ 특별한, 특유의/ (성격, 식성 등이) 까다로운"},
+            {e:"apart", k:"(시간, 공간적으로) (~와) 떨어져[진]/ 따로따로(인), 별개로[의]"},
+            {e:"portion", k:"부분/ 몫, 할당/ (음식) 1인분"},
+            {e:"proportion", k:"비율, (~에 대응한) 크기[양/정도]/ 균형, 조화"},
+            {e:"passage", k:"통로/ (사람, 탈것 등의) 통행/ 한 구절/ (법안 등의) 통과/ (시간의) 경과, 진행"},
+            {e:"passenger", k:"승객, 여객(旅客)"},
+            {e:"passerby", k:"통행인"},
+            {e:"pastime", k:"오락, 소일거리"},
+            {e:"surpass", k:"~을 능가하다, ~보다 낫다"},
+            {e:"pace", k:"(일, 생활, 걸음 등의) 속도, 페이스/ 걸음, 보폭"},
+            {e:"pathetic", k:"한심한, 형편없는/ 애처로운, 가슴 아픈"},
+            {e:"antipathy", k:"(강한) 반감, 혐오"},
+            {e:"empathy", k:"공감(능력), 감정 이입"},
+            {e:"sympathy", k:"동정(심), 연민/ 동감, 공감, 찬성"},
+            {e:"patient", k:"참을성[인내심]이 있는, 끈기 있는/ 환자"},
+            {e:"passion", k:"열정/ 열중, 애착"},
+            {e:"compassion", k:"(깊은) 동정, (남을) 측은하게 여기는 마음"},
+            {e:"patriot", k:"애국자"},
+            {e:"patron", k:"후원자, 후원 단체/ 고객, 단골"},
+            {e:"pattern", k:"양식, 형태, 패턴/ 도안, 무늬/ 본보기, 견본"},
+            {e:"pedestrian", k:"보행자/ 보행자(용)의"},
+            {e:"expedition", k:"(특정 목적을 위한) 원정, 탐험(대)"},
+            {e:"compel", k:"억지로~하게 하다, 강요하다"},
+            {e:"expel", k:"추방하다, 쫓아내다"},
+            {e:"appeal", k:"(도움, 정보 등을) 호소[간청](하다)/ ~의 흥미를 끌다/ 항소[상고/상소](하다)"},
+            {e:"polish", k:"닦다, 윤이 나게 하다/ 연마하다, 세련되게 다듬다/ 광택(제)/ 윤 내기/ 세련(됨)"},
+            {e:"impulse", k:"충동, 자극/ 추진(력)"},
+            {e:"penalty", k:"형벌, 처벌/ 벌금/ 불이익, (경기) (반칙에 대한) 페널티[벌칙/벌점]"},
+            {e:"punish", k:"벌하다, 처벌하다"},
+            {e:"depend", k:"의지[의존]하다, 믿다/ ~에 달려 있다"},
+            {e:"suspend", k:"일시중지하다/ 정학[정직]시키다/ 매달다, 걸다/ 연기[유보]하다"},
+            {e:"expend", k:"(돈, 시간, 노력 등을) 쓰다, 들이다"},
+            {e:"compensate", k:"(손실, 결점 등을) 보충[보완]하다/ (손해, 부상 등을) 보상[배상]하다"},
+            {e:"pension", k:"연금"},
+            {e:"ponder", k:"깊이[곰곰이] 생각하다, 심사숙고하다"},
+            {e:"experience", k:"경험/ 경험하다, 체험하다"},
+            {e:"experiment", k:"(과학) 실험, 시도/ 실험[시험]하다, 시도하다"},
+            {e:"expert", k:"전문가, 숙련가/ 전문가의, 숙련가의"},
+            {e:"peril", k:"위험, 모험"},
+            {e:"compete", k:"경쟁하다, 겨루다"},
+            {e:"competence", k:"능력, 역량"},
+            {e:"petition", k:"탄원(서), 청원, 간청/ 탄원[청원]하다"},
+            {e:"appetite", k:"식욕, 시장기/ 욕구, 욕망"},
+            {e:"repeat", k:"반복하다/ 따라 말하다, (~에게) 말을 옮기다"},
+            {e:"emphasize", k:"강조하다, 중요시하다"},
+            {e:"phase", k:"국면, 양상, (발전의) 단계/ 단계적으로 실행하다"},
+            {e:"phenomenon", k:"현상, 사건"},
+            {e:"fancy", k:"화려한/ 고급의, 비싼/ 선호/ 이성적인 호감(을 느끼다)/ 좋아하다"},
+            {e:"applaud", k:"(공연, 연설 등에) 박수갈채하다/ (결정, 생각 등을) 칭찬하다"},
+            {e:"explode", k:"폭발하다/ 폭발시키다/ (수, 양, 감정 등이) 크게 증가하다, 폭발하다"},
+            {e:"complete", k:"전체의, 전부의/ 완전한, 완성된/ 끝내다, 완성하다/ (서류 등을) 작성하다"},
+            {e:"complement", k:"보충물, 보완하는 것/ 보완하다, 보충하다"},
+            {e:"implement", k:"도구, 연장, 용구/ (정책, 계획 등을) 실행[이행]하다"},
+            {e:"compliment", k:"칭찬, 찬사/ 칭찬[찬양]하다"},
+            {e:"accomplish", k:"(임무 등을) 이루다, 성취하다, 완성하다"},
+            {e:"supply", k:"공급(량)/ 보급품, 생활 필수품/ (물건을) 공급하다"},
+            {e:"plenty", k:"풍부함, 넉넉함"},
+            {e:"please", k:"기쁘게하다, 만족시키다/ 제발, 아무쪼록"},
+            {e:"plead", k:"~에게 간청[탄원]하다/ (소송에서) 주장[변론]하다"},
+            {e:"complicate", k:"복잡하게하다"},
+            {e:"simplicity", k:"단순함, 간단함"},
+            {e:"complex", k:"복잡한/ 복합[합성]의/ 건물 단지/ 복합체, 합성물/ 콤플렉스, 강박관념"},
+            {e:"perplex", k:"(사람을) 당황[난처]하게 하다"},
+            {e:"imply", k:"내포[함축]하다, 암시하다, 넌지시 비추다"},
+            {e:"apply", k:"지원[신청]하다/ 적용[응용]하다/ 적용되다/ (연고 등을) 바르다"},
+            {e:"diplomatic", k:"외교(상)의/ 외교에 능한, 외교적 수완이 있는"},
+            {e:"employ", k:"(사람을) 고용하다/ (물건을) 사용하다"},
+            {e:"exploit", k:"(부당하게) 이용하다, 착취하다/ (자원 등을) 개발[이용]하다/ 위업, 공적/ 묘기"},
+            {e:"explore", k:"탐험하다/ 탐구[연구]하다"},
+            {e:"political", k:"정치(상)의/ 정치적인"},
+            {e:"policy", k:"(정당, 국가 등의) 정책, 방책, 방침/ 보험 증권"},
+            {e:"metropolis", k:"대도시, (인구, 문화 등의) 중심지"},
+            {e:"popular", k:"인기있는/ 대중적인, 대중의"},
+            {e:"populate", k:"(사람을) 거주시키다/ (~에) 살다, 거주하다"},
+            {e:"public", k:"공공의, 일반 대중의/ 공적인/ 공공연한, 공개된/ 대중, 일반사람들"},
+            {e:"publish", k:"출판[발행]하다/ (작품, 정보 등을) 발표[공표]하다"},
+            {e:"republic", k:"공화국, 공화 정치 체제"},
+            {e:"export", k:"수출하다/ (사상 등을) 다른 나라에 소개하다[전하다]/ 수출 (품)"},
+            {e:"import", k:"수입하다/ 수입(품)"},
+            {e:"transport", k:"수송[운송]하다/ 수송[운송]/ 운송 수단, 수송 기관"},
+            {e:"portable", k:"휴대용의, 가지고 다닐 수 있는"},
+            {e:"opportunity", k:"(좋은) 기회, 호기"},
+            {e:"pose", k:"(이의, 위험 등을) 제기[야기]하다/ 포즈[자세](를 취하다)/ 겉치레"},
+            {e:"position", k:"위치, 자리/ 입장, 처지/ 일자리, 직위/ ~에 배치하다, 자리를잡다"},
+            {e:"positive", k:"긍정적인, 적극적인/ 분명한, 확신하는/ 승낙의/ 양수의, 양성인, 양극의"},
+            {e:"post", k:"우편(물)(을 발송하다)/ 직책/ 위치/ 기둥/ 신문의 이름/ 배치하다/ 게시하다"},
+            {e:"deposit", k:"계약금, 보증금/ 예금(액)/ 퇴적물/ 놓다, ~에 두다/ 예금하다/ 퇴적[침전]시키다"},
+            {e:"impose", k:"(의무, 세금, 벌 등을) 부과하다/ 강요하다"},
+            {e:"purpose", k:"목적, 의도, 의향"},
+            {e:"oppose", k:"~에 반대하다/ ~에 저항하다, 대립하다"},
+            {e:"suppose", k:"추측하다, 생각하다/ 가정하다"},
+            {e:"component", k:"구성요소, 성분/ 구성하는"},
+            {e:"opponent", k:"(싸움, 논쟁 등의) 상대, 적, 반대자"},
+            {e:"compound", k:"혼합하다, 합성하다/ (좋지 않은 일을) 악화시키다/ 합성물, 합성어/ 합성의"},
+            {e:"possible", k:"가능한, 있을 수 있는"},
+            {e:"possess", k:"가지다, 소유하다/ (감정, 생각 등이) 지배하다, ~의 마음을사로잡다"},
+            {e:"potential", k:"잠재적인, 가능성 있는/ 잠재력, 가능성"},
+            {e:"precious", k:"귀중한, 소중한/ 값비싼"},
+            {e:"appreciate", k:"이해하다, 알다, 깨닫다/ 고맙게 여기다/ 감상하다, 진가를 알다[인정하다]"},
+            {e:"praise", k:"칭찬하다, 찬양하다/ 칭찬"},
+            {e:"priceless", k:"매우귀중한, (너무 귀하여) 값을 매길 수 없는"},
+            {e:"comprehend", k:"이해하다, 파악하다"},
+            {e:"prison", k:"감옥, 형무소"},
+            {e:"imprison", k:"투옥하다, 감금하다"},
+            {e:"enterprise", k:"기업, 회사/ 진취적인 정신/ (중요하거나 모험적인) 사업, 계획"},
+            {e:"surprise", k:"놀라게하다/ 놀람/ 뜻밖의 일"},
+            {e:"prey", k:"먹이/ 희생(물)/ 잡아먹다/ 괴롭히다"},
+            {e:"pressure", k:"압력, 압박(감)"},
+            {e:"express", k:"표현하다, 나타내다/ 명확한, 뚜렷한/ 급행의/ 속달(의)/ 급행열차, 고속버스"},
+            {e:"impress", k:"깊은인상을 주다, 감동시키다/ (도장 등을) 찍다"},
+            {e:"oppress", k:"억압하다"},
+            {e:"prime", k:"가장중요한, 최상의/ 전성기"},
+            {e:"primary", k:"제1의, 주요한/ 최초의, 처음의, 1차적인/ 초등의"},
+            {e:"primitive", k:"원시(시대)의, 원시적인"},
+            {e:"principal", k:"주요한, 으뜸가는/ 교장, 학장/ (단체의) 장, 중심인물"},
+            {e:"principle", k:"원리, 원칙"},
+            {e:"prior", k:"먼저의, 이전의/ ~에 우선하는, (~보다) 중요한"},
+            {e:"private", k:"개인적인, 사적인, 사유의/ 비밀의"},
+            {e:"deprive", k:"빼앗다, 박탈하다"},
+            {e:"probable", k:"있을법한, 그럴듯한"},
+            {e:"probe", k:"엄밀히조사하다, (진상 등을) 규명하다/ 엄밀한 조사"},
+            {e:"prove", k:"증명[입증]하다/ ~로 판명되다"},
+            {e:"approve", k:"찬성하다, 승낙하다/ (공식적으로) 허가하다, 승인하다"},
+            {e:"proper", k:"적당한, 알맞은, 어울리는, 올바른"},
+            {e:"property", k:"재산, 소유물"},
+            {e:"appropriate", k:"적당한, 타당한"},
+            {e:"punctual", k:"시간을엄수하는, 기한을 지키는"},
+            {e:"punctuate", k:"구두점을찍다"},
+            {e:"disappoint", k:"실망시키다, (기대 등을) 저버리다"},
+            {e:"dispute", k:"논쟁하다, 반박하다, 반론을 제기하다/ 논쟁, 분쟁, 언쟁"},
+            {e:"reputation", k:"평판, 명성, 명망"},
+            {e:"acquire", k:"획득하다/ (지식, 기술 등을) 얻다, 습득하다"},
+            {e:"require", k:"필요로하다/ (법, 규칙 등이) 요구하다, 규정하다"},
+            {e:"inquire", k:"묻다/ 조사하다"},
+            {e:"conquer", k:"정복하다/ (적 등을) 이기다/ (어려움 등을) 극복하다"},
+            {e:"request", k:"요청(하다), 요구(하다)"},
+            {e:"exquisite", k:"매우아름다운, 정교한/ (느낌이) 강렬한, (감각이) 예리한"},
+            {e:"range", k:"다양한것들/ 범위/ 산맥/ (범위가) ~에 이르다/ 배열[배치]하다"},
+            {e:"arrange", k:"(미리) 계획하다, 마련하다/ 배열[정돈]하다/ (음악) 편곡하다"},
+            {e:"rank", k:"계급, 지위/ 열, 줄, 정렬/ (~에) 위치하다/ 위치시키다/ 등급을 매기다"},
+            {e:"rate", k:"비율/ 속도/ 요금, 가격/ 등급/ 평가하다/ 평가되다/ 간주하다/ 간주되다"},
+            {e:"ratio", k:"비율, 비"},
+            {e:"rational", k:"이성적인/ 분별 있는, 이치에 맞는"},
+            {e:"reason", k:"이유/ 이성, 판단력/ 추리[추론]하다"},
+            {e:"correct", k:"옳은, 올바른/ 적당한/ 바로잡다, 정정하다"},
+            {e:"direct", k:"직접적인/ 직행[통]의/ 지도[감독/연출]하다/ 길을 가르쳐주다/ 명령[지시]하다"},
+            {e:"erect", k:"똑바로선/ (똑바로) 세우다, (건물 등을) 짓다"},
+            {e:"region", k:"지역, 지방, 지대/ (신체의) 부분"},
+            {e:"regular", k:"규칙적인, 정기적인/ 보통의"},
+            {e:"regulate", k:"(법률, 규칙으로) 규제하다, 규정하다/ (속도, 온도, 압력 등을) 조정[조절]하다"},
+            {e:"rule", k:"규칙, 원칙/ 통치[지배](하다)/ (공식적으로) 결정[판결]하다/ (줄을) 긋다"},
+            {e:"reign", k:"통치기간, 정권 기간/ 통치하다, 군림하다"},
+            {e:"royal", k:"왕의, 왕립의"},
+            {e:"rotate", k:"회전하다/ 회전시키다/ 교대하다/ 교대시키다"},
+            {e:"control", k:"통제[억제](하다)/ 지배(하다)/ 조절(하다)"},
+            {e:"enroll", k:"등록하다, 명부에 올리다, 가입하다"},
+            {e:"bankrupt", k:"파산한, 지불 불능의/ 파산시키다/ 파산자"},
+            {e:"corrupt", k:"부패한, 부정한/ 부패[타락]시키다, 부정을 저지르게 하다"},
+            {e:"disrupt", k:"방해하다, 지장을 주다"},
+            {e:"erupt", k:"(폭력 사태, 소음 등이) 갑자기 발생하다/ (용암, 화산재 등이) 분출하다"},
+            {e:"interrupt", k:"가로막다, 방해하다/ (일시적으로) 중단시키다"},
+            {e:"route", k:"길/ 항로, 노선"},
+            {e:"routine", k:"일상적인일[과정], 틀에 박힌 일/ 일상적인, 틀에 박힌"},
+            {e:"sacred", k:"신성한/ 종교적인"},
+            {e:"sacrifice", k:"희생(하다)/ 제물(로 바치다)"},
+            {e:"saint", k:"성인, 성자"},
+            {e:"descend", k:"내려가다/ 내리막이다/ (어둠, 침묵 등이) 내려앉다/ 유래하다/ (~로) 전락하다"},
+            {e:"scale", k:"규모, 정도/ 계급, 등급/ (지도 등의) 축척, 비율/ 저울, 천칭"},
+            {e:"escalate", k:"악화되다[시키다]/ 상승하다[시키다]"},
+            {e:"conscious", k:"~을 의식[자각]하고 있는/ 의식이 있는/ (생각, 노력 등이) 의식[의도]적인"},
+            {e:"subconscious", k:"잠재의식(의)"},
+            {e:"conscience", k:"양심, 도덕심"},
+            {e:"describe", k:"묘사하다, 기술하다"},
+            {e:"prescribe", k:"(약 등을) 처방하다/ (공식적으로) 규정하다, 정하다"},
+            {e:"subscribe", k:"(신문, 잡지 등을) (정기) 구독하다/ (문서에) 서명하다, 서약하다"},
+            {e:"section", k:"부분, 부문, 구획/ (도시 등의) 구역, 지역/ (의학) 절개/ 분할하다"},
+            {e:"sector", k:"(나라 경제, 사업 등의) 부문, 분야/ (군대의) 지구/ 부채꼴"},
+            {e:"segment", k:"(나누어진) 부분, 구획/ (과일의) 한 조각"},
+            {e:"sense", k:"감각/ 느낌, 감정/ 분별[판단]력, 눈치/ 의미, 뜻/ 느끼다, 알아채다"},
+            {e:"sensation", k:"감각/ (설명하기 힘든) 느낌, 기분/ 엄청난 관심, 굉장한 놀라움, 대소동"},
+            {e:"nonsense", k:"무의미한[어리석은] 말[행동], 터무니없는 생각"},
+            {e:"sentiment", k:"감정, 정서/ 감상"},
+            {e:"consent", k:"승낙, 허가, 동의/ 승낙[허락]하다, 동의하다"},
+            {e:"resent", k:"분개하다, 화를 내다"},
+            {e:"scent", k:"향기, 냄새"},
+            {e:"sequence", k:"연속, 잇달아 일어남/ 순서, 차례"},
+            {e:"consequence", k:"결과/ 영향/ 중요성"},
+            {e:"subsequent", k:"다음의, 그 뒤[후]의, (~에) 이어서 일어나는"},
+            {e:"pursue", k:"추구하다/ 뒤쫓다, 추적하다"},
+            {e:"suit", k:"~에 적합하다/ (옷, 색 등이) ~에게 어울리다/ 한 벌의 옷, 정장/ 소송"},
+            {e:"execute", k:"처형하다/ 실행하다, 수행하다"},
+            {e:"desert", k:"사막/ (사람, 장소, 의무 등을) 버리다, 떠나다"},
+            {e:"insert", k:"삽입하다, 넣다/ (문서 등에) 말을 써 넣다, 덧붙이다"},
+            {e:"exert", k:"(힘, 영향력 등을) 발휘하다, 행사하다/ 노력하다"},
+            {e:"series", k:"(사건, 일 등의) 연속/ (TV, 책 등의) 연속물, 시리즈"},
+            {e:"conserve", k:"보존하다, 보호하다"},
+            {e:"deserve", k:"~을 받을 만하다"},
+            {e:"preserve", k:"보호하다, 보존하다/ 유지하다"},
+            {e:"reserve", k:"예약하다/ 남겨 두다, 비축하다/ 비축(량)"},
+            {e:"observe", k:"~을 보고 알아채다/ 관찰하다/ 준수하다/ (관찰한 바를) 말하다, 진술하다"},
+            {e:"reside", k:"거주하다, 살다"},
+            {e:"president", k:"대통령/ (기업 등의) 회장"},
+            {e:"session", k:"(회의, 법정, 의회 등이) 진행 중인 시기/ (특정 활동을 위한) 시간, 기간, 회기"},
+            {e:"assess", k:"평가하다/ (가치, 요금 등을) 매기다, 사정하다"},
+            {e:"obsess", k:"사로잡다/ (~에) 강박감을 갖다"},
+            {e:"settle", k:"(분쟁 등을) 해결하다/ 정착하다[시키다]/ (마음 등을) 진정하다[시키다]"},
+            {e:"sign", k:"징후, 조짐/ 신호, 표시/ 표지판/ 기호/ 서명하다, 계약하다/ 신호를 보내다"},
+            {e:"significant", k:"중대한, 중요한/ (수, 양 등이) 상당한, 현저한/ (표정, 행동 등이) 의미심장한"},
+            {e:"assign", k:"(임무, 역할 등을) 맡기다, 임명[선임]하다/ (시간, 가치 등을) 할당[부여]하다"},
+            {e:"design", k:"디자인하다/ 설계[고안]하다/ 디자인(된 형태)/ 설계(도/안)/ 계획"},
+            {e:"designate", k:"지정[지명]하다/ 표시하다/ 지정[지명]된"},
+            {e:"resign", k:"(직위 등을) 사임하다/ 포기하고 ~을 받아들이다"},
+            {e:"signal", k:"신호/ 신호를 보내다, 암시하다"},
+            {e:"seal", k:"(편지를) 봉하다/ 밀폐[밀봉]하다/ 확정하다/ 바다표범, 물개/ 인장, 도장/ 봉인"},
+            {e:"similar", k:"비슷한, 유사한"},
+            {e:"resemble", k:"~와 닮다, 유사하다"},
+            {e:"assemble", k:"모으다/ 모이다/ 조립하다"},
+            {e:"seemingly", k:"겉보기에는, 얼핏 보기에"},
+            {e:"simulation", k:"흉내, 가상[모의] 실험, 시뮬레이션"},
+            {e:"simultaneously", k:"동시에, 일제히"},
+            {e:"social", k:"사회의, 사회적인/ 사교상의, 친목의"},
+            {e:"associate", k:"연상하다, 연관시키다/ (특히 나쁜 친구와) 교제하다/ 동료, 친구/ 준-, 부-/ 제휴한"},
+            {e:"sole", k:"유일한, 단 하나의"},
+            {e:"solitary", k:"고독한, 고독을 즐기는/ 혼자서 하는, 혼자의"},
+            {e:"solitude", k:"혼자있음, (혼자임을 즐기는) 고독"},
+            {e:"solve", k:"(문제 등을) 풀다, 해결하다"},
+            {e:"resolve", k:"해결하다/ 결정하다, 결심하다/ (굳은) 결심, 단호한 의지"},
+            {e:"dissolve", k:"(고체를 액체로) 녹이다[녹다]/ 종료하다, 해산시키다/ 사라지다"},
+            {e:"philosophy", k:"철학"},
+            {e:"sophisticated", k:"세련된, 경험 많은, 숙련된/ (기계, 기술 등이) 정교한, 복잡한"},
+            {e:"sophomore", k:"(대학, 고교의) 2학년생"},
+            {e:"spectacle", k:"구경거리, 장관/ 안경"},
+            {e:"aspect", k:"(상황, 문제 등의) 측면, 국면/ (사물 등의) 방향, 면/ 모습, 외관"},
+            {e:"expect", k:"기대하다, 예상하다"},
+            {e:"inspect", k:"조사하다, 검사하다/ (건물, 기구 등을) 사찰[감사]하다"},
+            {e:"respect", k:"존경, 존중/ 측면, 점, 사항/ 존경하다, 존중하다/ (법 등을) 준수하다, 지키다"},
+            {e:"prospect", k:"(장래의) 전망, 가망, 기대/ (성공) 가능성/ 조망, 경치"},
+            {e:"suspect", k:"의심하다, 혐의를 두다, ~라고 생각하다/ 용의자, 요주의 인물"},
+            {e:"species", k:"(생물 분류상의) 종/ (일반적으로) 종류"},
+            {e:"specific", k:"특정한/ 구체적인, 자세한"},
+            {e:"special", k:"특별한"},
+            {e:"despite", k:"~에도 불구하고"},
+            {e:"prosper", k:"(일, 사업 등이) 번영[번성]하다, 성공하다"},
+            {e:"despair", k:"절망(하다), 자포자기(하다)"},
+            {e:"sphere", k:"구, 구형/ (활동, 지식 등의) 영역, 분야"},
+            {e:"atmosphere", k:"공기, 대기/ 분위기"},
+            {e:"hemisphere", k:"(지구, 하늘의) 반구/ (뇌의) 반구"},
+            {e:"spirit", k:"정신, 마음/ 영혼, 혼/ 열정, 사기, 활기"},
+            {e:"aspire", k:"(~하기를) 열망[갈망]하다, 바라다"},
+            {e:"inspire", k:"고무시키다, 격려하다/ (감정, 사상 등을) 불어넣다, 영감을주다"},
+            {e:"expire", k:"(계약, 임기 등이) 만기가 되다, 끝나다"},
+            {e:"respond", k:"(말, 행동, 치료 등에) 반응하다/ (질문 등에) 대답[응답]하다"},
+            {e:"responsible", k:"~을 책임 지고 있는, 맡고 있는/ ~에 책임이 있는[원인이 되는]/ 책임감 있는"},
+            {e:"sponsor", k:"후원자, 스폰서/ (행사, 활동, 자선단체 등을) 후원하다"},
+            {e:"stand", k:"서다/ (어떤 상태, 입장 등에) 있다/ 참다[견디다]/ 입장, 처지/ 받침대, 스탠드"},
+            {e:"standard", k:"표준, 기준, 수준/ 표준의"},
+            {e:"state", k:"상태, 상황/ 국가, 주(州)/ 진술하다, 말하다"},
+            {e:"statistics", k:"통계(치[량/표])/ 통계학"},
+            {e:"statue", k:"(사람, 동물 등의) 상(像), 조각상"},
+            {e:"status", k:"(법적, 직업적, 사회적) 지위, 신분, 위상/ (진행) 상황"},
+            {e:"stable", k:"안정된, 견고한/ 마구간, 외양간"},
+            {e:"establish", k:"(기업 등을) 설립하다, (법률 등을) 제정하다/ (사실 등을) 입증[증명]하다"},
+            {e:"constant", k:"끊임없는, 계속되는/ 불변의/ 불변(의 것)/ (수학) 상수"},
+            {e:"estate", k:"재산, 자산/ 토지, 소유지"},
+            {e:"instance", k:"예, 실례, 사례, 경우"},
+            {e:"instant", k:"즉석의, 즉각적인/ 인스턴트의, 즉석 요리의/ 즉시, 순간, 찰나"},
+            {e:"obstacle", k:"장애(물), 방해(물)"},
+            {e:"substance", k:"물질, 물체/ 실체, 본체, 본질/ (이야기 등의) 요지, 중요한 부분"}
+      ] },
+      day50: { label: "DAY 50~", data: [
+            {e:"spirit", k:"정신, 마음/ 영혼, 혼/ 열정, 사기, 활기"},
+            {e:"aspire", k:"(~하기를) 열망[갈망]하다, 바라다"},
+            {e:"inspire", k:"고무시키다, 격려하다/ (감정, 사상 등을) 불어넣다, 영감을주다"},
+            {e:"expire", k:"(계약, 임기 등이) 만기가 되다, 끝나다"},
+            {e:"respond", k:"(말, 행동, 치료 등에) 반응하다/ (질문 등에) 대답[응답]하다"},
+            {e:"responsible", k:"~을 책임 지고 있는, 맡고 있는/ ~에 책임이 있는[원인이 되는]/ 책임감 있는"},
+            {e:"sponsor", k:"후원자, 스폰서/ (행사, 활동, 자선단체 등을) 후원하다"},
+            {e:"stand", k:"서다/ (어떤 상태, 입장 등에) 있다/ 참다[견디다]/ 입장, 처지/ 받침대, 스탠드"},
+            {e:"standard", k:"표준, 기준, 수준/ 표준의"},
+            {e:"state", k:"상태, 상황/ 국가, 주(州)/ 진술하다, 말하다"},
+            {e:"statistics", k:"통계(치[량/표])/ 통계학"},
+            {e:"statue", k:"(사람, 동물 등의) 상(像), 조각상"},
+            {e:"status", k:"(법적, 직업적, 사회적) 지위, 신분, 위상/ (진행) 상황"},
+            {e:"stable", k:"안정된, 견고한/ 마구간, 외양간"},
+            {e:"establish", k:"(기업 등을) 설립하다, (법률 등을) 제정하다/ (사실 등을) 입증[증명]하다"},
+            {e:"constant", k:"끊임없는, 계속되는/ 불변의/ 불변(의 것)/ (수학) 상수"},
+            {e:"estate", k:"재산, 자산/ 토지, 소유지"},
+            {e:"instance", k:"예, 실례, 사례, 경우"},
+            {e:"instant", k:"즉석의, 즉각적인/ 인스턴트의, 즉석 요리의/ 즉시, 순간, 찰나"},
+            {e:"obstacle", k:"장애(물), 방해(물)"},
+            {e:"substance", k:"물질, 물체/ 실체, 본체, 본질/ (이야기 등의) 요지, 중요한 부분"},
+            {e:"assist", k:"돕다, 거들다, 원조하다/ (스포츠) 어시스트"},
+            {e:"consist", k:"(주요 특징 등이) ~에 존재하다, ~에 있다/ ~로 이루어지다, 구성되다"},
+            {e:"exist", k:"존재하다, 실재하다/ (어려운 상황에서) 생존하다"},
+            {e:"insist", k:"(특정 사실에 대해) 주장하다, 고집하다/ (강력히) 요구하다"},
+            {e:"resist", k:"~에 반대하다, 저항[반항]하다/ (유혹 등을) 견디다, 참다"},
+            {e:"restore", k:"회복하다[시키다]/ 복원[복구]하다/ 돌려주다"},
+            {e:"arrest", k:"체포(하다)"},
+            {e:"cost", k:"비용[대가](가 들다)/ (시간, 노력 등을) 요하다, 희생(하다)"},
+            {e:"steady", k:"꾸준한, 지속적인/ 안정된, 흔들리지 않는"},
+            {e:"system", k:"체계, 체제, 시스템, 방식"},
+            {e:"constitute", k:"구성하다/ ~로 간주되다/ 설립하다, 제정하다"},
+            {e:"institute", k:"학회, 협회, 연구소/ (제도, 절차 등을) 제정하다, 도입하다"},
+            {e:"substitute", k:"대체하다, 바꾸다/ (일 등을) 대신하다/ 대용품, 대리인"},
+            {e:"destination", k:"목적지, 행선지"},
+            {e:"superstition", k:"미신"},
+            {e:"distinguish", k:"구별하다, 분간하다/ 두드러지게 하다, 유명하게 하다"},
+            {e:"extinguish", k:"(불 등을) 끄다/ 끝내다, 소멸시키다"},
+            {e:"extinct", k:"(종족, 생물 등이) 멸종한, 사멸한/ (화산 등이) 활동을 멈춘"},
+            {e:"distinct", k:"별개의, 다른/ 확실한, 명료한"},
+            {e:"instinct", k:"본능, 본성"},
+            {e:"stimulate", k:"자극하다, 촉진하다/ 격려하다, 고무하다"},
+            {e:"strict", k:"엄격한, 엄한/ 정확한, 엄밀한"},
+            {e:"restrict", k:"제한하다, 한정하다"},
+            {e:"district", k:"(행정구, 선거구 등의) 지구, 구역, 지역"},
+            {e:"strain", k:"긴장(감), 피로, 부담/ 잡아당기기/ 노력하다/ (근육 등을) 혹사시키다"},
+            {e:"restrain", k:"(~을) 제지하다, 못하게 하다/ (감정, 행동 등을) 억누르다, 억제하다"},
+            {e:"strait", k:"해협/ (특히 경제적인) 곤경, 궁핍"},
+            {e:"distress", k:"고통, 고뇌/ 곤경, 빈곤/ 괴롭히다, 곤란하게 하다"},
+            {e:"stress", k:"긴장, 스트레스/ 압력/ 강조(하다)/ 강세(를 두다)/ 스트레스를 주다[받다]"},
+            {e:"prestige", k:"명성, 위신/ 명성이 있는, 명품의, 명문의"},
+            {e:"structure", k:"구조, 조직, 체계/ 건축물, 구조물/ 구성하다, 조직화하다"},
+            {e:"construct", k:"건설하다/ (문장 등을) 구성하다/ 건축물, 구조물/ (복잡한) 생각"},
+            {e:"instruct", k:"(~하라고) 지시하다/ 가르치다, 교육하다"},
+            {e:"instrument", k:"기구, 도구/ 악기"},
+            {e:"industry", k:"산업, 공업/ 근면"},
+            {e:"destroy", k:"파괴하다, 손상시키다/ (삶, 계획 등을) 망치다"},
+            {e:"insult", k:"모욕하다, 창피를 주다/ 모욕, 무례(한 말, 행동)"},
+            {e:"result", k:"결과, 결말/ ~의 결과로서 일어나다, ~에 기인하다/ ~의 결과를 낳다, ~로 끝나다"},
+            {e:"assume", k:"가정하다, 추측하다/ (책임, 임무 등을) (떠)맡다/ ~인 체하다, 가장하다"},
+            {e:"consume", k:"(시간, 돈, 에너지 등을) 소비하다, 쓰다/ 먹다, 마시다"},
+            {e:"presume", k:"가정하다, 추측하다"},
+            {e:"resume", k:"다시시작하다, 재개하다/ (자리, 지위 등을) 되찾다, 다시 차지하다"},
+            {e:"assure", k:"보장하다, 장담하다/ ~을 확실하게 하다"},
+            {e:"reassure", k:"안심시키다"},
+            {e:"insure", k:"보험에들다"},
+            {e:"surge", k:"(군중, 감정 등이) 밀어닥치다, 쇄도(하다)/ 급등[급증](하다)"},
+            {e:"source", k:"근원, 원천/ 원인"},
+            {e:"resource", k:"자원, 물자, 자산/ (학습, 연구) 자료"},
+            {e:"attach", k:"붙이다, 첨부하다/ 소속시키다"},
+            {e:"attack", k:"공격/ (갑작스런) 발병/ 공격하다/ (갑자기) 발병하다"},
+            {e:"stake", k:"(회사에 투자한) 돈, 지분, 내기(돈)/ 말뚝"},
+            {e:"intact", k:"온전한, 손상되지 않은"},
+            {e:"contact", k:"접촉, 연락, 교섭/ 인맥, 연줄/ ~와 연락하다"},
+            {e:"integrate", k:"(부분, 요소 등을[이]) 통합하다[통합되다]/ 인종 차별을 철폐하다"},
+            {e:"attain", k:"달성하다/ (특정 연령, 수량, 수준 등에) 도달하다"},
+            {e:"entire", k:"전체의/ 완전한"},
+            {e:"tailor", k:"재단사/ (요구, 목적 등에) 맞추어 만들다, 맞게 하다"},
+            {e:"retail", k:"소매(하다)/ 소매의/ 소매로"},
+            {e:"detail", k:"세부사항, 사소한 것[일]/ 상세 정보/ (사실, 정보 등을) 열거하다"},
+            {e:"contain", k:"포함하다, 함유하다, 수용하다, 담다"},
+            {e:"entertain", k:"즐겁게하다/ 대접하다, 환대하다"},
+            {e:"obtain", k:"얻다, 획득하다"},
+            {e:"retain", k:"보유하다, 유지하다/ (정보 등을) 기억하다"},
+            {e:"sustain", k:"유지하다, 지속시키다/ (손해, 부상 등을) 겪다, 입다/ 떠받치다, 지지하다"},
+            {e:"content", k:"내용(물)/ 용량, 함유량/ 주제, 아이디어, 이야기/ 만족한/ 만족시키다"},
+            {e:"continent", k:"대륙, 육지"},
+            {e:"continue", k:"계속하다/ 계속되다/ (중단한 후에) 다시 시작하다/ 재개되다"},
+            {e:"technique", k:"(학문, 과학 등의) (전문) 기술, 기법, 테크닉/ (예술, 스포츠 등의) 기교, 솜씨"},
+            {e:"technology", k:"과학기술"},
+            {e:"temperate", k:"(기후, 지역 등이) 온화한, 온난한/ 온건한, 도를 넘지 않는, 절제하는"},
+            {e:"temperature", k:"온도, 기온/ (몸의) 체온"},
+            {e:"temper", k:"(화를 잘 내는 등의) 성미, 기질/ (일시적) 기분"},
+            {e:"temperament", k:"기질, 성질"},
+            {e:"temporary", k:"일시적인/ 임시의"},
+            {e:"contemporary", k:"현대의, 당대의/ 동시대의, 같은 시기의/ 동시대인"},
+            {e:"tempt", k:"유혹하다/ ~할 생각이 들게 하다"},
+            {e:"attempt", k:"시도하다/ 시도, 노력"},
+            {e:"attend", k:"출석[참석]하다/ 돌보다, 수행하다/ 다루다, 처리하다/ 주의를기울이다"},
+            {e:"pretend", k:"~인 체하다, 가장하다"},
+            {e:"extend", k:"연장[확장]하다/ 연장[확장]되다/ 뻗다, 내밀다/ (도움 등을) 베풀다, 제공하다"},
+            {e:"intend", k:"~할 작정이다/ 의도하다, 고의로 하다"},
+            {e:"tend", k:"~하는 경향이 있다, ~하기 쉽다/ 돌보다, 보살피다"},
+            {e:"tender", k:"부드러운, 연한, 다정한/ 제공[제출]하다/ (공사 등에) 입찰하다"},
+            {e:"tense", k:"긴장한/ 팽팽하게 당겨진/ (문법) 시제"},
+            {e:"intense", k:"강렬한, 심한/ 열렬한, 열심인"},
+            {e:"terminal", k:"(병이) 말기의/ 끝의, 말단의/ 종점, 종착역/ 터미널"},
+            {e:"terminate", k:"종결하다, 끝내다/ 종결되다, 끝나다"},
+            {e:"determine", k:"결정짓다, 좌우하다/ 결심하다"},
+            {e:"term", k:"용어/ 조건/ 관점/ 기간/ 관계, 사이/ (~라고) 이름 짓다, 칭하다, 부르다"},
+            {e:"terrible", k:"무서운, 끔찍한/ 심한, 대단한, 엄청난"},
+            {e:"terror", k:"공포, 두려움/ 테러, (정치적 목적을 가진) 폭력 행사"},
+            {e:"terrify", k:"겁나게하다, 무섭게 하다"},
+            {e:"terrestrial", k:"지구(상)의, 지상의, 육지의"},
+            {e:"territory", k:"영토/ 지방, 지역, 구역"},
+            {e:"testify", k:"증언하다/ 증명하다, ~의 증거가 되다"},
+            {e:"contest", k:"경쟁하다, 겨루다/ 논쟁하다/ 경쟁, 경연"},
+            {e:"protest", k:"항의하다, 시위하다, 이의를 제기하다/ 항의, 시위, 이의 (제기)"},
+            {e:"text", k:"본문, 텍스트/ 원문/ 문자 메시지를 보내다"},
+            {e:"context", k:"(사건 등의) 배경, 정황/ (문장의) 문맥, 전후 관계"},
+            {e:"textile", k:"직물, 옷감"},
+            {e:"texture", k:"감촉, 질감/ 짜임새, 조화"},
+            {e:"theology", k:"신학"},
+            {e:"enthusiasm", k:"열정, 열광, 열중"},
+            {e:"thesis", k:"논문/ 주장, 논제"},
+            {e:"hypothesis", k:"가설/ 가정, 추측"},
+            {e:"theme", k:"주제, 테마"},
+            {e:"tone", k:"음색, 음성/ 어조, 말투/ 색조"},
+            {e:"intonation", k:"억양(문장의 높낮이), 어조"},
+            {e:"monotonous", k:"단조로운, 변화 없는, 지루한"},
+            {e:"tune", k:"가락, 곡(曲), 선율/ (악기를) 조율하다/ (방송 주파수, 채널 등을) 맞추다"},
+            {e:"torture", k:"고문/ 심한 고통/ 고문하다/ (육체적, 정신적으로) 괴롭히다"},
+            {e:"distort", k:"(정보, 사실 등을) 왜곡[곡해]하다/ (소리, 이미지 등을) 바꾸다, 비틀다"},
+            {e:"torment", k:"고통, 고뇌/ 괴롭히다, (특히 정신적으로) 고통을 주다"},
+            {e:"abstract", k:"추상적인/ 이론적인/ 추상/ 요약, 발췌/ 추출하다/ 요약하다"},
+            {e:"attract", k:"(주의, 흥미 등을) 끌다, 끌어당기다, 매혹하다"},
+            {e:"contract", k:"계약을맺다/ 수축하다, 줄다/ 수축시키다, 줄이다/ 계약"},
+            {e:"distract", k:"(마음, 주의 등을) 흐트러뜨리다, 산만하게 하다"},
+            {e:"extract", k:"뽑아내다, 추출하다/ 발췌하다/ 추출물/ 발췌"},
+            {e:"treat", k:"대(우)하다, 다루다/ 치료하다/ 대접(하다)/ 특별한 것[선물]"},
+            {e:"treaty", k:"(국가 간의) 조약, 협정"},
+            {e:"retreat", k:"후퇴(하다), 물러서다/ (생각, 결정 등을) 철회(하다), 바꾸다"},
+            {e:"trace", k:"추적(하다), 자국(을 따라가다)/ (유래, 원인 등을) 밝혀내다"},
+            {e:"track", k:"통로, 오솔길/ 지나간 자국, 흔적/ 철도, 선로/ 경주로, 트랙/ 자취를 따라가다"},
+            {e:"trail", k:"질질끌다/ 끌리다/ 추적하다, 흔적을 쫓다/ 오솔길/ 자국, 흔적, 실마리"},
+            {e:"trait", k:"특성, 특징"},
+            {e:"portray", k:"묘사하다, 표현하다"},
+            {e:"tradition", k:"전통, 관습, 전해진 것"},
+            {e:"betray", k:"배반[배신]하다, 저버리다/ 폭로하다, 드러내다"},
+            {e:"tremble", k:"(공포, 분노 등으로) 떨다, 떨리다/ (나뭇잎, 건물 등이) 흔들리다, 진동하다"},
+            {e:"tremendous", k:"엄청난, 막대한/ 멋진, 대단한"},
+            {e:"attribute", k:"~의 탓[덕]으로 돌리다/ 성질, 특성"},
+            {e:"contribute", k:"기부[기증]하다/ ~에 기여[공헌]하다, 도움이 되다/ (신문, 잡지 등에) 기고하다"},
+            {e:"distribute", k:"분배하다, 배급하다, 배포하다"},
+            {e:"trust", k:"신뢰, 믿음/ 위탁, 신탁/ 신뢰하다, 믿다/ 의지하다/ 맡기다/ (경제) 담합체"},
+            {e:"entrust", k:"(중요한 일, 물건, 돈 등을) 맡기다, 위탁하다"},
+            {e:"truthful", k:"정직한, (대답 등이) 진실한, 참된"},
+            {e:"intrude", k:"방해하다, 참견하다/ 침입하다, 침범하다"},
+            {e:"thrust", k:"세게밀다/ (칼 등으로) 찌르다/ (세게) 밀침, 찌르기/ 요점, 취지"},
+            {e:"threat", k:"위협, 협박"},
+            {e:"disturb", k:"방해하다/ (평화, 질서, 상태를) 깨뜨리다, 어지럽히다"},
+            {e:"trouble", k:"문제, 곤란/ 괴롭히다, 걱정시키다/ 성가시게 하다"},
+            {e:"abundant", k:"풍부한, 많은"},
+            {e:"surround", k:"둘러싸다, 에워싸다, 포위하다"},
+            {e:"urban", k:"도시의"},
+            {e:"suburb", k:"교외, 도시 주변의 주택지"},
+            {e:"use", k:"사용하다, 쓰다/ 사용, 이용/ 용도/ 쓸모, 이익"},
+            {e:"abuse", k:"학대하다/ (권리, 약 등을) 남용하다, 오용하다/ 학대/ 남용, 오용"},
+            {e:"utensil", k:"도구, 기구 (특히 주방 기구)"},
+            {e:"utilize", k:"활용하다, 이용하다"},
+            {e:"invade", k:"침략[침입]하다/ (권리 등을) 침해하다"},
+            {e:"evade", k:"(질문, 의무, 세금 등을) 회피하다/ 탈출하다"},
+            {e:"vague", k:"명확치않은, 모호한, 막연한/ (모양, 윤곽 등이) 분명치 않은"},
+            {e:"extravagant", k:"낭비하는, 사치스러운/ 지나친, 엄청난"},
+            {e:"value", k:"가치/ 유용성, 중요성/ 높이 평가하다, 중요시하다/ (금액으로) 평가하다"},
+            {e:"evaluate", k:"(가치, 수량 등을) 평가하다, 사정하다, 견적을 내다"},
+            {e:"valid", k:"(표, 문서, 계약 등이) 유효한/ 타당한, 논리적인"},
+            {e:"available", k:"이용할수 있는, 쓸모 있는, 입수할 수 있는/ (어떤 일에 응할) 시간이 있는"},
+            {e:"prevail", k:"(생각, 관습, 현상 등이) 만연[유행]하다/ 우세하다, 이기다"},
+            {e:"vanish", k:"사라지다, 소멸하다"},
+            {e:"vain", k:"허영심이강한/ 헛된, 무익한"},
+            {e:"avoid", k:"피하다, 회피하다"},
+            {e:"vacant", k:"비어있는, 사람이 살지 않는/ 빈자리의, 결원의"},
+            {e:"vacuum", k:"진공/ (자리, 마음 등의) 공백, 공허/ 진공 청소기"},
+            {e:"various", k:"다양한, 가지각색의"},
+            {e:"variable", k:"변동이심한, 변덕스러운/ 바꿀 수 있는/ 변수"},
+            {e:"variation", k:"(양, 정도의) 차이, 변화(량/율)/ 변형/ 변주(곡)"},
+            {e:"avenge", k:"(피해자를 대신해) 복수하다, 원수를 갚다"},
+            {e:"revenge", k:"(피해자 자신이) 복수(하다), 원한(을 갚다)"},
+            {e:"adventure", k:"모험(심), 색다른 경험"},
+            {e:"venture", k:"(위험이 따르는) 사업, 벤처 사업/ 위험을 무릅쓰고 가다, 과감히 ~하다"},
+            {e:"convention", k:"집회, 모임/ 협정, 협약/ 관습, 인습"},
+            {e:"event", k:"(중요한) 사건/ (공연 등의) 행사, 이벤트, (경기) 종목"},
+            {e:"invent", k:"발명하다, 고안하다/ (이야기, 변명 등을) 꾸며내다"},
+            {e:"prevent", k:"막다, 예방하다, 방해하다"},
+            {e:"avenue", k:"대로, 길, (거리 이름으로) ~가(街)/ (성취를 위한) 수단, 길, 방법"},
+            {e:"convenient", k:"편리한, 사용하기 쉬운/ (장소가) 가까운"},
+            {e:"intervene", k:"중재하다, 개입하다/ 끼어들다, 방해하다/ (사건 등이) 사이에일어나다"},
+            {e:"souvenir", k:"기념품, 기념 선물"},
+            {e:"advertise", k:"광고하다, 선전하다, 홍보하다"},
+            {e:"convert", k:"바꾸다, 변화시키다, 개조하다/ 개종[전향]하다/ 개종[전향]시키다"},
+            {e:"vertical", k:"수직의, 세로의/ 수직(선)"},
+            {e:"converse", k:"대화하다, 담화하다/ 정반대(의), 역(逆)(의)"},
+            {e:"diverse", k:"다양한, 가지각색의"},
+            {e:"reverse", k:"반대의, 거꾸로의/ 뒤집다, 거꾸로 하다/ 후진하다/ 반대, 역 (逆)/ 뒤, 뒷면/ 후진"},
+            {e:"verse", k:"(시의) 연, (노래의) 절/ 시, 운문"},
+            {e:"version", k:"(어떤 것의) 변형, 판(版), 버전/ (사건 등에 대한) 소견, 해석"},
+            {e:"divorce", k:"(~와) 이혼(하다)/ 분리(하다), 단절(하다)"},
+            {e:"via", k:"~을 경유하여, ~을 거쳐/ ~을 매개로 하여, ~을 통해서"},
+            {e:"obvious", k:"분명한, 명백한"},
+            {e:"previous", k:"이전의, 앞의, 사전의"},
+            {e:"convey", k:"(생각, 감정 등을) 전하다/ 나르다, 수송하다"},
+            {e:"voyage", k:"항해(하다), 여행(하다)"},
+            {e:"victory", k:"승리"},
+            {e:"convict", k:"(~에게) 유죄를 선고[입증]하다/ 죄수, 수형자"},
+            {e:"convince", k:"확신[납득]시키다/ 설득하다"},
+            {e:"divide", k:"나누다, 분할하다, 분열되다"},
+            {e:"individual", k:"개별의, 개개의/ 독특한, 특유의/ 개인, 개체"},
+            {e:"devise", k:"(방법, 장치 등을) 고안하다, 궁리하다"},
+            {e:"widow", k:"미망인, 과부"},
+            {e:"vigor", k:"(정신적, 육체적) 활력, 기력, 정력"},
+            {e:"vision", k:"시력, 시야/ 선견지명, 통찰력/ 미래상, 비전/ 상상력, 환상"},
+            {e:"revise", k:"(의견, 계획 등을) 수정하다, 고치다/ (책, 내용 등을) 개정[수정]하다/ 복습하다"},
+            {e:"supervise", k:"(일, 사람 등을) 감독하다, 관리하다"},
+            {e:"evidence", k:"증거"},
+            {e:"provide", k:"공급[제공]하다/ 준비[대비]하다/ 부양하다/ 규정하다"},
+            {e:"view", k:"관점, 견해/ 시야/ 장면, 경치/ ~라고 생각하다, 간주하다/ 보다"},
+            {e:"interview", k:"(직장, 학교 등에서) 면접(하다[보다])/ 회견[인터뷰](하다)"},
+            {e:"review", k:"재검토, 재조사/ 비평, 리뷰/ 복습/ 재검토[재조사]하다/ 비평하다/ 복습하다"},
+            {e:"envy", k:"선망, 질투/ 부러워하다, 질투하다"},
+            {e:"survey", k:"(질문 등을 통한) 조사/ (토지 등의) 측량/ 조사하다/ 측량하다"},
+            {e:"survive", k:"살아남다, 생존하다/ 극복하다, 견디다/ ~보다 오래 살다"},
+            {e:"vivid", k:"(기억, 묘사, 색상 등이) 생생한, 선명한"},
+            {e:"vital", k:"매우중요한, 필수적인/ 활기찬, 생기가 넘치는/ 생명 유지에필요한"},
+            {e:"vocal", k:"목소리의, 음성의/ 강하게 의견을 말하는/ (음악) 보컬, 노래부분"},
+            {e:"vocabulary", k:"어휘"},
+            {e:"vocation", k:"천직, 직업/ 소명, 사명감"},
+            {e:"advocate", k:"옹호하다, 지지하다/ 옹호자, 지지자/ 변호사"},
+            {e:"evoke", k:"(기억, 감정을) 불러일으키다, 환기시키다"},
+            {e:"provoke", k:"(반응, 감정 등을) 유발하다/ 화나게 하다"},
+            {e:"voluntary", k:"자발적인, 자원 봉사의, 무상으로 일하는"},
+            {e:"evolve", k:"진화하다/ 진화시키다/ 발전하다/ 발전시키다"},
+            {e:"revolve", k:"돌다, 회전하다/ 돌리다, 회전시키다/ (천문학) 공전하다"},
+            {e:"involve", k:"포함하다, 반하다/ 관계[관련]시키다, (사건 등에) 말려들게하다/ 참여시키다"},
+            {e:"volume", k:"음량, 볼륨/ 양/ 부피, 용적/ 책, 권(卷)"},
+            {e:"vote", k:"투표/ 표/ 투표권/ 투표수, 득표수/ 투표하다/ 의결하다"},
+            {e:"devote", k:"헌신하다, (돈, 시간, 노력 등을) 바치다/ 전념하다"},
+            {e:"award", k:"상, 상금/ (상 등을) 수여하다, 주다"},
+            {e:"reward", k:"보상(금), 보수/ 현상금/ 보상하다, 보답하다"},
+            {e:"aware", k:"알고있는, 의식[인식]하는"},
+            {e:"warn", k:"경고하다, 주의시키다"},
+            {e:"overlook", k:"간과하다; 눈감아 주다; 내려다보다"},
+            {e:"dispose", k:"배치[배열]하다; 처분하다; 처리[해결]하다; 경향을 갖게 하다"},
+            {e:"support", k:"지지(하다); 부양(하다); 받침; 받치다"},
+            {e:"company", k:"친구; 일행; 회사; 동료"},
+            {e:"absorb", k:"(액체, 기체를) 흡수하다; (정보, 지식 등을) 받아들이다; (사람이 ~에) 열중하게 하다"},
+            {e:"engage", k:"참여하다, 관여하다; (주의를) 끌다, 사로잡다; 약속하다; 약혼하다"},
+            {e:"account", k:"(~의 비율을) 차지하다; 은행 계좌; 이용 계정; 계산서; 보고 (서), 설명(하다); 이유"},
+            {e:"withdraw", k:"취소하다, 철회하다; 그만두다; 인출하다; 철수하다"},
+            {e:"bar", k:"막대기; 토막; 빗장(문을 닫아 거는 막대); 막다; 장애물; 주점; 법정"},
+            {e:"capital", k:"수도; 대문자; 자본"},
+            {e:"occupy", k:"차지하다; 사용하다; 점거하다"},
+            {e:"charge", k:"요금, 대가를 청구하다; 의무, 책임을 지우다; 고발하다, 비난하다; 충전하다"},
+            {e:"cast", k:"던지다; 드리우다; 배역을 맡기다; (눈길을) 던지다, 주다"},
+            {e:"succeed", k:"~의 뒤를 잇다, 계승하다; 성공하다"},
+            {e:"current", k:"현재의; 흐름; 경향; 전류"},
+            {e:"due", k:"(마땅히) 치러야 할, 만기가 된; ~하기로 되어 있는; 도착 예정인; 마땅한, 적합한; ~에 기인하는"},
+            {e:"conduct", k:"인도하다; 지휘하다; 수행하다"},
+            {e:"present", k:"출석하고있는; 현재(의); 보여주다; 소개하다; 선물하다; 선물"},
+            {e:"facility", k:"(편의) 시설; 기능; 장소; 재능"},
+            {e:"figure", k:"모양; 모습; (대표하는) 인물; 중요한 부분을 차지하다; 계산하다; 수치; 생각하다"},
+            {e:"refer", k:"언급하다; 참조하다"},
+            {e:"degree", k:"단계; (온도, 각도 등의) 도(度); 정도; 학위"},
+            {e:"issue", k:"발표(하다); 발행하다; 발행물; 쟁점, 문제"},
+            {e:"object", k:"대상; 물체; 목적; 반대하다"},
+            {e:"subject", k:"통치[지배]하다; 국민, 백성; ~의 영향을 받는; 주제; 학과, 과목; 피실험자"},
+            {e:"project", k:"예상하다; 계획(하다); 투영하다"},
+            {e:"just", k:"올바른; 틀림없이; 방금; 단지, 그저"},
+            {e:"release", k:"석방(하다); 발표[개봉](하다); 방출(하다)"},
+            {e:"deliver", k:"배달하다; 말하다[강연하다]; 분만하다; 분만시키다"},
+            {e:"major", k:"더중요한, 주된; (군대) 소령; 전공(하다)"},
+            {e:"command", k:"명령(하다); 지휘(하다); 내려다보이다"},
+            {e:"maintain", k:"유지하다; 지속하다; 주장하다; 부양하다"},
+            {e:"mean", k:"평균의; 의미하다, 의도하다; 천한, 초라한; 비열한; 수단"},
+            {e:"commit", k:"(죄 등을) 저지르다; 약속하다; (시설 등에) 보내다"},
+            {e:"move", k:"움직이다, 이동하다; 움직임, 이동; 이사하다; 진행되다; 조치, 행동; 감동시키다"},
+            {e:"apply", k:"적용[응용]하다; 적용되다; 바르다; 지원[신청]하다"},
+            {e:"post", k:"위치; 우편(을 보내다); 직책(에 배치하다); 기둥; 게시하다"},
+            {e:"appreciate", k:"(~의 가치를) 이해하다; 고맙게 여기다; 감상하다, 진가를 알다[인정하다]"},
+            {e:"express", k:"표현하다; 뚜렷한; 급행의; (우편) 속달의; 급행열차; 고속버스; (우편) 속달"},
+            {e:"direct", k:"지도하다; 지시[명령]하다; 직접적인; 직행의; 길을 가르쳐 주다; (똑바로) 돌리다, 향하게 하다"},
+            {e:"scale", k:"저울; 등급, 계급; 규모, 정도; 비율"},
+            {e:"sense", k:"감정, 느낌; 감각; 분별력, 눈치; 의미"},
+            {e:"suit", k:"~에 어울리다; 적합하다, 편리하다; (어울리는) 한 벌, 정장; 소송"},
+            {e:"observe", k:"관찰하다; 알아채다; 알게 된 것을 말하다; 준수하다"},
+            {e:"settle", k:"해결하다, 끝내다; 정착하다; 정착시키다; 진정시키다; 진정하다"},
+            {e:"associate", k:"동료, 친구; ~와 교제하다; 연관시키다, 연상하다"},
+            {e:"state", k:"상태, 상황; 국가, 주; 진술하다"},
+            {e:"stress", k:"긴장, 스트레스; 압력, 힘; 강조하다; (발음) 강세(를 두다)"},
+            {e:"assume", k:"가정하다, 추측하다; 맡다; 가장하다"},
+            {e:"content", k:"내용, 함유(량); 아이디어, 주제; 만족시키다; 만족한"},
+            {e:"attend", k:"출석하다; 돌보다, 간호하다, 수행하다; 다루다, 처리하다; 주의를 기울이다"},
+            {e:"term", k:"기간, 학기, 임기; 조건; 관계; 용어; (~라고) 이름 짓다, 칭하다"},
+            {e:"treat", k:"(일, 상황 등을) 다루다; 치료하다; 대접하다"},
+            {e:"abuse", k:"학대(하다); 남용(하다), 오용(하다)"},
+            {e:"view", k:"시야; 전망, 장면; 보다; 견해; ~라고 생각하다"},
+            {e:"considerable", k:"상당한, 많은"},
+            {e:"considerate", k:"사려깊은, 배려하는"},
+            {e:"successful", k:"성공적인, 출세한"},
+            {e:"successive", k:"연속[계속]적인"},
+            {e:"competitive", k:"경쟁력을갖춘/ 경쟁의, 경쟁적인"},
+            {e:"competent", k:"유능한, 역량 있는"},
+            {e:"economic", k:"경제(학)의"},
+            {e:"economical", k:"절약이되는, 경제적인"},
+            {e:"imaginary", k:"상상속에 존재하는, 가상의"},
+            {e:"imaginative", k:"상상력이풍부한, 창의적인"},
+            {e:"imaginable", k:"상상할수 있는"},
+            {e:"comparative", k:"비교의, 비교적인, 상대적인"},
+            {e:"comparable", k:"비교될만한, 비슷한/ ~에 필적하는, 비길 만한"},
+            {e:"effective", k:"효과적인"},
+            {e:"efficient", k:"능률적인, 효율적인"},
+            {e:"historic", k:"역사적으로중요한"},
+            {e:"historical", k:"역사(상)의"},
+            {e:"continuous", k:"끊임없는, 계속적인"},
+            {e:"continual", k:"반복[거듭]되는, 끊임없는"},
+            {e:"respectful", k:"존경[존중]하는, 공손한"},
+            {e:"respectable", k:"존경할만한, 훌륭한"},
+            {e:"respective", k:"각각의, 저마다의"},
+            {e:"comprehensible", k:"이해할수 있는"},
+            {e:"comprehensive", k:"포괄적인, 광범위한"},
+            {e:"confident", k:"확신하고있는/ 자신만만한"},
+            {e:"confidential", k:"(일급) 비밀의, 기밀의"},
+            {e:"desirable", k:"바람직한"},
+            {e:"desirous", k:"원하는, 바라는"},
+            {e:"beneficial", k:"유익한, 유리한"},
+            {e:"beneficent", k:"인정많은, 선을 베푸는"},
+            {e:"literary", k:"문학의, 문예의"},
+            {e:"literal", k:"글자그대로의"},
+            {e:"literate", k:"읽고쓸 줄 아는"},
+            {e:"sensitive", k:"섬세한/ 민감한, 예민한"},
+            {e:"sensible", k:"분별[지각] 있는, 현명한"},
+            {e:"social", k:"사회의, 사회적인/ 사교상의, 친목의"},
+            {e:"sociable", k:"사교적인, 붙임성 있는"},
+            {e:"memorable", k:"기억[주목]할 만한"},
+            {e:"memorial", k:"기념물, 기념관[비]/ 기념[추도]의"},
+            {e:"practicable", k:"실행가능한"},
+            {e:"practical", k:"실제적인/ 실용적인"},
+            {e:"intelligent", k:"(사람, 동물의 머리가) 영리한, 총명한"},
+            {e:"intellectual", k:"지적인, 지성의"},
+            {e:"intelligible", k:"이해할수 있는, 명료한"},
+            {e:"personal", k:"개인적인, 사적인"},
+            {e:"personnel", k:"인사의, 직원의/ 전 직원"},
+            {e:"alive", k:"살아있는"},
+            {e:"live", k:"살아있는/ 생방송의, 실황 공연의"},
+            {e:"lively", k:"활기찬, 생기 있는"},
+            {e:"valuable", k:"가치있는, 소중한"},
+            {e:"invaluable", k:"(가치를 매길 수 없을 정도로) 귀중한"},
+            {e:"subject", k:"~에 영향받기 쉬운/ ~의 지배를 받는/ 주제/ 과목"},
+            {e:"subjective", k:"주관적인"},
+            {e:"alternate", k:"번갈아하는/ 격일의, 격주의, 하나 거르는/ 대안의"},
+            {e:"alternative", k:"대안의, 대체할 수 있는/ 대안"},
+            {e:"cloth", k:"옷감, 천"},
+            {e:"clothes", k:"옷, 의복"},
+            {e:"clothing", k:"옷, 의류"},
+            {e:"wake", k:"잠에서깨다/ 깨우다"},
+            {e:"awake", k:"깨어있는/ 잠에서 깨다/ 깨우다"},
+            {e:"object", k:"물체, 사물/ 목표/ 대상/ 반대하다"},
+            {e:"objective", k:"목표, 목적/ 객관적인"},
+            {e:"high", k:"높은/ 높게"},
+            {e:"highly", k:"매우"},
+            {e:"close", k:"(거리상) 가까운/ 친밀한/ 가까이/ 닫다"},
+            {e:"closely", k:"밀접하게/ 엄중히, 면밀히"},
+            {e:"deep", k:"(거리상) 깊은/ (거리상) 깊게, 깊이"},
+            {e:"deeply", k:"매우/ (정도가) 깊게, 깊이"},
+            {e:"near", k:"가까운/ 가까이"},
+            {e:"nearly", k:"거의/ 하마터면"},
+            {e:"hard", k:"단단한/ 어려운/ 열심히"},
+            {e:"hardly", k:"거의~ 않다"},
+            {e:"late", k:"늦은/ 늦게"},
+            {e:"lately", k:"최근에, 요즘"},
+            {e:"bad", k:"나쁜, 좋지 않은"},
+            {e:"badly", k:"나쁘게, 서투르게/ 몹시, 심하게"},
+            {e:"manner", k:"방법, 방식/ 태도"},
+            {e:"manners", k:"예절, 예의범절"},
+            {e:"arm", k:"팔"},
+            {e:"arms", k:"무기"},
+            {e:"mean", k:"의미하다/ 의도하다/ 비열한"},
+            {e:"means", k:"수단"},
+            {e:"beside", k:"~옆에"},
+            {e:"besides", k:"~이외에도/ ~을 제외하고/ 게다가"},
+            {e:"sometime", k:"(과거 또는 미래의) 언젠가"},
+            {e:"sometimes", k:"이따금, 종종"},
+            {e:"adapt", k:"적응시키다/ 적응하다/ 각색하다"},
+            {e:"adopt", k:"입양하다/ 채택하다"},
+            {e:"expand", k:"커지다, 확장하다"},
+            {e:"expend", k:"(돈, 시간, 노력 등을) 쓰다, 들이다"},
+            {e:"confirm", k:"(예약, 약속 등을) 확인하다, 확정하다/ (사실을) 확인해주다"},
+            {e:"conform", k:"순응하다, 따르다"},
+            {e:"command", k:"명령(하다)/ 지휘(하다)"},
+            {e:"commend", k:"칭찬하다"},
+            {e:"acquire", k:"획득하다/ (지식, 기술 등을) 얻다, 습득하다"},
+            {e:"inquire", k:"묻다/ 조사하다"},
+            {e:"require", k:"필요로하다/ (법, 규칙 등이) 요구하다"},
+            {e:"lie", k:"눕다, 있다/ 거짓말하다"},
+            {e:"lay", k:"~을 눕히다, ~을 놓다"},
+            {e:"wonder", k:"~이 궁금하다/ 놀라움, 경이"},
+            {e:"wander", k:"방랑하다, (떠)돌아다니다"},
+            {e:"access", k:"접근(성), 이용(성)/ 접근하다"},
+            {e:"assess", k:"평가하다/ (가치, 요금 등을) 매기다, 사정하다"},
+            {e:"compliment", k:"칭찬(하다)"},
+            {e:"complement", k:"보충물/ 보완하다, 보충하다"},
+            {e:"attribute", k:"~의 탓[덕]으로 돌리다/ 성질, 특성"},
+            {e:"contribute", k:"기부[기증]하다/ ~에 기여하다"},
+            {e:"distribute", k:"분배하다, 배급하다"},
+            {e:"find", k:"찾다, 발견하다"},
+            {e:"found", k:"설립하다"},
+            {e:"sit", k:"앉다/ ~을 앉히다"},
+            {e:"seat", k:"앉히다/ 좌석, 자리"},
+            {e:"aboard", k:"탑승[승선]하여/ (배, 열차, 항공기 등의) 안에서[으로]"},
+            {e:"abroad", k:"외국에, 해외로"},
+            {e:"vacation", k:"방학"},
+            {e:"vocation", k:"천직, 직업/ 소명, 사명감"},
+            {e:"fall", k:"떨어지다/ 넘어지다/ (특정한 상태가) 되다"},
+            {e:"fell", k:"~을 쓰러뜨리다/ 나무를 베다"},
+            {e:"ethical", k:"윤리적인, 도덕상의"},
+            {e:"ethnic", k:"인종의, 민족의"},
+            {e:"bold", k:"대담한, 용감한"},
+            {e:"bald", k:"대머리의"},
+            {e:"jealous", k:"질투하는"},
+            {e:"zealous", k:"열심인, 열성적인"},
+            {e:"spontaneously", k:"자발적으로/ 즉흥적으로"},
+            {e:"simultaneously", k:"동시에, 일제히"},
+            {e:"affect", k:"영향을미치다/ ~인 체하다"},
+            {e:"effect", k:"효과, 영향/ 결과"},
+            {e:"quite", k:"아주, 완전히"},
+            {e:"quiet", k:"조용한, 고요한"},
+            {e:"quit", k:"그만두다, 중지하다"},
+            {e:"principal", k:"주요한, 으뜸가는/ 교장"},
+            {e:"principle", k:"원리, 원칙"},
+            {e:"lose", k:"잃다"},
+            {e:"loose", k:"느슨한, 풀린"},
+            {e:"genuine", k:"진짜의/ 진실된"},
+            {e:"genius", k:"천재(적 재능)"},
+            {e:"sew", k:"꿰매다, 바느질하다"},
+            {e:"sow", k:"씨를뿌리다"},
+            {e:"saw", k:"톱"},
+            {e:"daily", k:"매일의/ 일상의"},
+            {e:"dairy", k:"우유의, 유제품의"},
+            {e:"diary", k:"일기"},
+            {e:"elect", k:"선거하다, 선출하다"},
+            {e:"erect", k:"똑바로선/ (똑바로) 세우다, (건물 등을) 짓다"},
+            {e:"conscience", k:"양심, 도덕심"},
+            {e:"conscious", k:"~을 의식하고 있는/ 의식이 있는, 깨어 있는/ 의식적인"},
+            {e:"conscientious", k:"양심적인, 성실한"},
+            {e:"consciousness", k:"(의학) 의식/ 알고 있음, 인식"},
+            {e:"row", k:"줄, 열, 배를 젓다"},
+            {e:"raw", k:"날것의/ 가공하지 않은"}
+      ] }
+    };
+    let currentBook = 'day01';
+    try {
+      const savedBook = localStorage.getItem(BOOK_KEY);
+      if (savedBook && BOOKS[savedBook]) currentBook = savedBook;
+    } catch (e) {}
+    const STORAGE_KEY = 'ne_voca_etym_' + currentBook + '_v1';
+
+    const vocabulary = BOOKS[currentBook].data;
+
+    // 단어장 바꾸기: 선택 저장 후 새로고침(각 단어장의 진도·오답노트는 그대로 유지)
+    function changeBook(val) {
+      if (!BOOKS[val] || val === currentBook) return;
+      try { localStorage.setItem(BOOK_KEY, val); } catch (e) {}
+      location.reload();
+    }
+
+    function initBookNav() {
+      const nav = document.getElementById('bookNav');
+      nav.innerHTML = '';
+      Object.keys(BOOKS).forEach(key => {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = BOOKS[key].label + ' (' + BOOKS[key].data.length + ')';
+        if (key === currentBook) opt.selected = true;
+        nav.appendChild(opt);
+      });
+    }
+
+    let currentSetIdx = 0;
+    let setWrongCounts = {}; // setIdx -> 이번 회차 오답 개수(기록용 표시)
+    let setAttempted = {};   // setIdx -> 한 번이라도 도전했는지 여부
+    let wrongLog = {};       // e(영단어) -> {e,k,count}  누적 오답노트
+    let quizPool = [];
+    let currentQuestionIdx = 0;
+    let correctCount = 0;
+    let isAnswered = false;
+    let quizMode = 'normal'; // 'normal' | 'review'
+    let currentQType = 'mc'; // 'mc' | 'spell'
+    let reviewFilterSetIdx = null; // 오답복습이 특정 세트 한정인지(null=전체)
+    let roundWords = [];        // 이번 학습 회차(객관식+주관식)에 출제되는 단어 목록
+    let quizPhase = 'mc';       // 'mc' -> 'spell' 순서로 진행(일반 학습 모드 전용)
+    let totalRoundQuestions = 0;
+
+    // ---------- 주관식 커트라인(80점) ----------
+    const SPELL_CUTOFF = 80;    // 주관식 통과 기준 점수(%)
+    let mcCorrect = 0;          // 이번 객관식 단계에서 맞춘 개수
+    let spellCorrect = 0;       // 이번 주관식 단계에서 맞춘 개수(재시험 시 초기화)
+    let setSpellPass = {};      // setIdx -> 주관식 80점 이상 통과 여부(저장됨)
+    let setCleared = {};        // setIdx -> '완전 클리어' 영구 기록(한 번 클리어하면 이후 누적복습 오답이 생겨도 다시 잠기지 않음)
+
+    // ---------- 유의어(같은 뜻을 가진 다른 단어) 자동 인식 ----------
+    // 같은 한글 뜻을 가진 단어끼리는 서로 '유의어'로 간주하여 주관식 채점 시 정답으로 인정
+    let synonymMap = {};
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function normalizeKoreanMeaning(s) {
+      return (s || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function buildSynonymMap() {
+      const byMeaning = {};
+      vocabulary.forEach(w => {
+        const key = normalizeKoreanMeaning(w.k);
+        if (!byMeaning[key]) byMeaning[key] = [];
+        if (!byMeaning[key].includes(w.e)) byMeaning[key].push(w.e);
+      });
+      const map = {};
+      vocabulary.forEach(w => {
+        const key = normalizeKoreanMeaning(w.k);
+        map[w.e] = byMeaning[key].filter(e => e !== w.e);
+      });
+      return map;
+    }
+
+    // ---------- 주관식(한국어 뜻 쓰기) 초성 힌트 ----------
+    // 뜻이 여러 개면(쉼표 구분) 첫 번째 뜻 기준으로,
+    // 첫 음절의 초성만 보여주고 나머지 글자는 ○ 처리
+    // 예) "동행하다, 동반하다" -> "ㄷ○○○" / "지인, 알고 지냄" -> "ㅈ○"
+    const CHOSUNG = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+
+    function getChosung(ch) {
+      const code = ch.charCodeAt(0) - 0xAC00;
+      if (code < 0 || code > 11171) return ch; // 한글 음절이 아니면 그대로
+      return CHOSUNG[Math.floor(code / 588)];
+    }
+
+    // 뜻 문자열에서 채점용 후보 목록 만들기
+    // - ( ) 괄호 설명은 제거: "(가스, 감정 등의) 배출구" -> "배출구"
+    // - / , ; · 로 구분 (단, [ ] 안의 / 는 구분자로 보지 않음)
+    // - [ ] 는 앞말 대체 표현: "예측[예상]하다" -> "예측하다", "예상하다"
+    // - "~" 기호 제거: "~할 수 있게 하다" -> "할 수 있게 하다"
+    function splitMeanings(k) {
+      let s = String(k);
+      let prev;
+      do { prev = s; s = s.replace(/\([^()]*\)/g, ' '); } while (s !== prev);
+      const parts = [];
+      let buf = '', depth = 0;
+      for (const ch of s) {
+        if (ch === '[') depth++;
+        if (ch === ']') depth = Math.max(0, depth - 1);
+        if (depth === 0 && /[,·\/;]/.test(ch)) { parts.push(buf); buf = ''; }
+        else buf += ch;
+      }
+      parts.push(buf);
+      const out = [];
+      const add = t => {
+        t = t.replace(/~/g, '').replace(/[()]/g, '').replace(/\s+/g, ' ').trim();
+        if (t && !out.includes(t)) out.push(t);
+      };
+      parts.forEach(p => {
+        p = p.trim();
+        if (!p) return;
+        const m = p.match(/^(.*?)([가-힣A-Za-z0-9]+)\[([^\]]+)\](.*)$/);
+        if (m) {
+          const [, pre, word, alts, post] = m;
+          add(pre + word + post.replace(/\[[^\]]*\]/g, ''));
+          alts.split('/').forEach(alt => {
+            alt = alt.trim();
+            // "분리하다[되다]" -> "분리되다" (짧은 어미 대체)
+            if (alt.length <= 2 && /다$/.test(alt) && /하다$/.test(word)) alt = word.slice(0, -2) + alt;
+            add(pre + alt + post.replace(/\[[^\]]*\]/g, ''));
+          });
+        } else {
+          add(p.replace(/\[[^\]]*\]/g, ''));
+        }
+      });
+      return out;
+    }
+
+    function buildSpellHint(k) {
+      const first = splitMeanings(k)[0] || '';
+      let out = '';
+      let revealed = false;
+      for (const ch of first) {
+        if (ch === ' ') { out += ' '; continue; }
+        if (!revealed) { out += getChosung(ch); revealed = true; }
+        else out += '○';
+      }
+      return out;
+    }
+
+    // ---------- 퍼지(오타 허용) 스펠링 매칭 ----------
+    function normalizeSpell(s) {
+      return (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    }
+
+    function levenshtein(a, b) {
+      const m = a.length, n = b.length;
+      if (m === 0) return n;
+      if (n === 0) return m;
+      const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+      for (let i = 0; i <= m; i++) dp[i][0] = i;
+      for (let j = 0; j <= n; j++) dp[0][j] = j;
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+          dp[i][j] = Math.min(
+            dp[i - 1][j] + 1,
+            dp[i][j - 1] + 1,
+            dp[i - 1][j - 1] + cost
+          );
+        }
+      }
+      return dp[m][n];
+    }
+
+    function isFuzzyMatch(input, target) {
+      const a = normalizeSpell(input);
+      const b = normalizeSpell(target);
+      if (!a) return false;
+      if (a === b) return true;
+      const dist = levenshtein(a, b);
+      const threshold = b.length <= 4 ? 1 : (b.length <= 8 ? 2 : 3);
+      return dist <= threshold;
+    }
+
+    // ---------- 한국어 뜻 채점 ----------
+    // 뜻이 여러 개면(쉼표 구분) 그 중 하나만 맞혀도 정답
+    // 허용: 완전 일치 / 오타 1글자(3글자 이상일 때) / "~하다" 생략 (예: "동행" = "동행하다")
+    function normalizeKo(s) {
+      return (s || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function gradeKoreanMeaning(input, target) {
+      const val = normalizeKo(input);
+      if (!val) return { ok: false, matchType: null, matched: null };
+      const candidates = splitMeanings(target.k);
+      for (const c of candidates) {
+        const cand = normalizeKo(c);
+        if (val === cand) return { ok: true, matchType: 'exact', matched: cand };
+        if (val + '하다' === cand || val === cand + '하다') {
+          return { ok: true, matchType: 'loose', matched: cand };
+        }
+        if (cand.length >= 3 && levenshtein(val, cand) <= 1) {
+          return { ok: true, matchType: 'typo', matched: cand };
+        }
+      }
+      return { ok: false, matchType: null, matched: null };
+    }
+
+    // 정답 또는 유의어(같은 뜻의 다른 단어)를 입력해도 정답으로 인정
+    // 반환값: { ok, matchType: 'exact'|'typo'|'synonym', matchedWord }
+    function gradeSpelling(input, target) {
+      if (isFuzzyMatch(input, target.e)) {
+        const exact = normalizeSpell(input) === normalizeSpell(target.e);
+        return { ok: true, matchType: exact ? 'exact' : 'typo', matchedWord: target.e };
+      }
+      const syns = synonymMap[target.e] || [];
+      for (const s of syns) {
+        if (isFuzzyMatch(input, s)) {
+          return { ok: true, matchType: 'synonym', matchedWord: s };
+        }
+      }
+      return { ok: false, matchType: null, matchedWord: null };
+    }
+
+    // ---------- 오답노트(누적) 관리 ----------
+    function recordWrong(item) {
+      const key = item.e;
+      wrongLog[key] = {
+        e: item.e,
+        k: item.k,
+        count: wrongLog[key] ? wrongLog[key].count + 1 : 1
+      };
+      saveToLocal();
+      updateReviewBtnLabel();
+    }
+
+    function clearWrongIfPresent(item) {
+      if (wrongLog[item.e]) {
+        delete wrongLog[item.e];
+        saveToLocal();
+        updateReviewBtnLabel();
+      }
+    }
+
+    function updateReviewBtnLabel() {
+      const btn = document.getElementById('reviewBtn');
+      if (!btn) return;
+      const count = Object.keys(wrongLog).length;
+      btn.innerText = count > 0 ? `오답노트 복습 (${count})` : '오답노트 복습';
+    }
+
+    // ---------- 세트별 '완전 통과' 판정 (객관식+주관식+오답복습 전부 포함) ----------
+    function pendingWrongCountForSet(setIdx) {
+      const start = setIdx * SET_SIZE;
+      const end = Math.min(start + SET_SIZE, vocabulary.length);
+      let cnt = 0;
+      for (let i = start; i < end; i++) {
+        if (wrongLog[vocabulary[i].e]) cnt++;
+      }
+      return cnt;
+    }
+
+    // 그 세트를 최소 1회 도전했고, 주관식 80점 이상 통과했으며,
+    // 남아있는 오답(객관식/주관식 통틀어)이 하나도 없으면 '완전 클리어'
+    // ★ 한 번 클리어한 세트는 영구 기록(setCleared)되어,
+    //   이후 상위 세트의 '누적 복습'에서 이 세트 단어를 틀리더라도 다시 잠기지 않음
+    function isSetCleared(setIdx) {
+      if (setCleared[setIdx]) return true;
+      const ok = !!setAttempted[setIdx] && !!setSpellPass[setIdx] && pendingWrongCountForSet(setIdx) === 0;
+      if (ok) {
+        setCleared[setIdx] = true;
+        saveToLocal();
+      }
+      return ok;
+    }
+
+    function saveToLocal() {
+      const data = { currentSetIdx, setWrongCounts, setAttempted, wrongLog, setSpellPass, setCleared };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function loadFromLocal() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return;
+      try {
+        const parsed = JSON.parse(saved);
+        currentSetIdx = parsed.currentSetIdx ?? 0;
+        setWrongCounts = parsed.setWrongCounts ?? {};
+        setAttempted = parsed.setAttempted ?? {};
+        wrongLog = parsed.wrongLog ?? {};
+        setSpellPass = parsed.setSpellPass ?? {};
+        setCleared = parsed.setCleared ?? {};
+
+        // [마이그레이션] 예전 버전에서 이미 완료했던 세트(도전O + 남은오답 0)는
+        // 주관식 통과로 간주하여 다시 잠기지 않게 함
+        if (parsed.setSpellPass === undefined) {
+          Object.keys(setAttempted).forEach(idxStr => {
+            const idx = parseInt(idxStr, 10);
+            if (setAttempted[idx] && pendingWrongCountForSet(idx) === 0) {
+              setSpellPass[idx] = true;
+            }
+          });
+        }
+
+        // [마이그레이션2] setCleared가 없던 예전 데이터 복구
+        // - 뒤 세트를 도전한 기록이 있다면, 그 앞 세트는 과거에 이미 완전 클리어했던 것이므로 영구 클리어 처리
+        //   (누적 복습 오답 때문에 뒤로 밀려버린 데이터를 원상 복구)
+        if (parsed.setCleared === undefined) {
+          const ts = totalSets();
+          let lastAttempted = -1;
+          for (let i = 0; i < ts; i++) {
+            if (setAttempted[i]) lastAttempted = i;
+          }
+          for (let i = 0; i < ts; i++) {
+            const provenByProgress = !!setSpellPass[i] && i < lastAttempted; // 뒤 세트 도전 = 이 세트는 이미 클리어했었음
+            const normallyCleared = !!setAttempted[i] && !!setSpellPass[i] && pendingWrongCountForSet(i) === 0;
+            if (provenByProgress || normallyCleared) setCleared[i] = true;
+          }
+          // 잠금 버그로 뒤 세트에서 앞 세트로 밀려난 경우, 실제 진행 위치로 복원
+          let unlocked = 0;
+          for (let i = 0; i < ts; i++) {
+            if (setCleared[i]) unlocked = i + 1;
+            else break;
+          }
+          const restoreIdx = Math.min(unlocked, ts - 1);
+          if (currentSetIdx < restoreIdx) currentSetIdx = restoreIdx;
+          saveToLocal();
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    function resetAllData() {
+      if (confirm("모든 학습 기록을 초기화할까요? (오답노트 포함)")) {
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      }
+    }
+
+    function totalSets() {
+      return Math.ceil(vocabulary.length / SET_SIZE);
+    }
+
+    // 현재까지 '완전 클리어'(객관식+주관식+오답복습까지 전부 통과)로 잠금 해제된 최대 세트 인덱스(0부터)
+    // - Set 1(인덱스 0)의 오답이 0개가 되어야 Set 2(인덱스 1)로 이동 가능
+    // - 중간에 하나라도 미해결 오답이 있으면 그 다음 세트부터는 잠김
+    function maxUnlockedSetIdx() {
+      const ts = totalSets();
+      let unlocked = 0;
+      for (let i = 0; i < ts; i++) {
+        if (isSetCleared(i)) unlocked = i + 1;
+        else break;
+      }
+      // unlocked는 '열려있는 세트 개수'이므로, 최대 인덱스는 unlocked(다음 세트)까지 허용
+      // 예: Set1 완료(unlocked=1)면 Set2(인덱스1)까지 접근 허용
+      return Math.min(unlocked, ts - 1);
+    }
+    function updateSetNav() {
+      const nav = document.getElementById('setNav');
+      nav.innerHTML = '';
+      const ts = totalSets();
+      const unlockedMax = maxUnlockedSetIdx();
+
+      // 현재 세트가 잠금 범위를 벗어나면(데이터가 꼬였거나 직접 수정 등) 자동으로 되돌림
+      if (currentSetIdx > unlockedMax) {
+        currentSetIdx = unlockedMax;
+        saveToLocal();
+      }
+
+      for (let i = 0; i < ts; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+
+        const isLocked = (i > unlockedMax);
+        let label = `Set ${i + 1}`;
+        if (isLocked) label += ' 🔒';
+        if (setAttempted[i]) {
+          if (isSetCleared(i)) {
+            label += ` (완료✅)`;
+          } else {
+            const pending = pendingWrongCountForSet(i);
+            label += pending > 0 ? ` (남은오답: ${pending})` : ` (완료✅)`;
+          }
+        }
+
+        opt.innerText = label;
+        opt.disabled = isLocked;
+        opt.selected = (i === currentSetIdx);
+        nav.appendChild(opt);
+      }
+
+      // UI 값도 확실히 동기화
+      nav.value = String(currentSetIdx);
+    }
+
+    function changeSet(val) {
+      const targetIdx = parseInt(val, 10);
+      const unlockedMax = maxUnlockedSetIdx();
+
+      if (targetIdx > unlockedMax) {
+        alert('이전 세트에서 주관식 80점 이상을 받고, 오답(객관식·주관식 모두)을 하나도 남김없이 해결해야 다음 세트로 넘어갈 수 있어요.');
+        // 선택을 원래 세트로 되돌림
+        const nav = document.getElementById('setNav');
+        nav.value = String(currentSetIdx);
+        return;
+      }
+
+      currentSetIdx = targetIdx;
+      saveToLocal();
+      initStudy();
+    }
+
+    function showOnly(viewId) {
+      document.querySelectorAll('.container').forEach(c => c.classList.add('hidden'));
+      document.getElementById(viewId).classList.remove('hidden');
+    }
+
+    function initStudy() {
+      showOnly('studyView');
+      updateSetNav();
+      document.getElementById('studyTitle').innerText = `Set ${currentSetIdx + 1} 학습 리스트`;
+      const container = document.getElementById('wordListContainer');
+      container.innerHTML = '';
+      const start = currentSetIdx * SET_SIZE;
+      const currentWords = vocabulary.slice(start, start + SET_SIZE);
+      currentWords.forEach(w => {
+        container.innerHTML += `<div class="word-item"><span>${w.e}</span><span>${w.k}</span></div>`;
+      });
+    }
+
+    function startQuiz() {
+      const start = currentSetIdx * SET_SIZE;
+      const currentWords = vocabulary.slice(start, start + SET_SIZE);
+
+      if (currentWords.length === 0) return;
+
+      quizMode = 'normal';
+
+      if (currentSetIdx === 0) {
+        roundWords = currentWords;
+      } else {
+        const previousWords = vocabulary.slice(0, start);
+        const randomPrev = shuffle(previousWords).slice(0, SET_SIZE);
+        roundWords = currentWords.concat(randomPrev); // 총 20개
+      }
+
+      totalRoundQuestions = roundWords.length * 2; // 객관식 1회 + 주관식 1회
+      quizPhase = 'mc';
+      quizPool = shuffle(roundWords);
+
+      currentQuestionIdx = 0;
+      correctCount = 0;
+      mcCorrect = 0;
+      spellCorrect = 0;
+      isAnswered = false;
+
+      showOnly('quizView');
+      showQuestion();
+    }
+
+    function openReviewQuiz(filterSetIdx = null) {
+      let items = Object.values(wrongLog);
+
+      if (filterSetIdx !== null) {
+        const start = filterSetIdx * SET_SIZE;
+        const end = Math.min(start + SET_SIZE, vocabulary.length);
+        const allowed = new Set(vocabulary.slice(start, end).map(w => w.e));
+        items = items.filter(it => allowed.has(it.e));
+      }
+
+      if (items.length === 0) {
+        alert(filterSetIdx !== null
+          ? '이 세트는 남은 오답이 없습니다! 👍'
+          : '복습할 오답 단어가 없습니다! 모두 잘 알고 있어요 👍');
+        return;
+      }
+
+      reviewFilterSetIdx = filterSetIdx;
+      quizMode = 'review';
+      quizPool = shuffle(items.map(it => ({ e: it.e, k: it.k })));
+      currentQuestionIdx = 0;
+      correctCount = 0;
+      isAnswered = false;
+
+      showOnly('quizView');
+      showQuestion();
+    }
+
+    // 결과화면에서 '이 세트 오답만 복습하기' 버튼이 호출
+    function reviewThisSet() {
+      openReviewQuiz(currentSetIdx);
+    }
+
+    function showQuestion() {
+      isAnswered = false;
+      document.getElementById('quizFeedback').innerText = '';
+      document.getElementById('nextQuestionBtn').classList.add('hidden');
+
+      const target = quizPool[currentQuestionIdx];
+      document.getElementById('progress').innerText = `${currentQuestionIdx + 1} / ${quizPool.length}`;
+
+      const modeLabel = document.getElementById('quizMode');
+      if (quizMode === 'review') {
+        currentQType = Math.random() < 0.5 ? 'mc' : 'spell';
+        modeLabel.innerHTML = "오답노트 복습 <span class='review-badge'>Review</span>";
+      } else {
+        // 일반 학습: 1단계(객관식 전부) → 2단계(주관식 전부) 순서로 진행
+        currentQType = quizPhase;
+        const phaseLabel = quizPhase === 'mc' ? '① 객관식' : '② 주관식';
+
+        const start = currentSetIdx * SET_SIZE;
+        const end = start + SET_SIZE;
+        const isNew = vocabulary.slice(start, end).some(v => v.e === target.e && v.k === target.k);
+        const reviewBadge = isNew ? '' : " <span class='review-badge'>누적</span>";
+        modeLabel.innerHTML = `${phaseLabel}${reviewBadge}`;
+      }
+
+      const optionsContainer = document.getElementById('optionsContainer');
+      const spellContainer = document.getElementById('spellContainer');
+      const spellInput = document.getElementById('spellInput');
+
+      if (currentQType === 'mc') {
+        spellContainer.classList.add('hidden');
+        optionsContainer.classList.remove('hidden');
+
+        document.getElementById('targetWord').innerText = target.e;
+
+        let options = [target.k];
+        while (options.length < 5) {
+          const randomVal = vocabulary[Math.floor(Math.random() * vocabulary.length)].k;
+          if (!options.includes(randomVal)) options.push(randomVal);
+        }
+        options = shuffle(options);
+
+        optionsContainer.innerHTML = '';
+        options.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = 'option-btn';
+          btn.innerText = opt;
+          btn.onclick = () => checkAnswer(opt, target.k, btn);
+          optionsContainer.appendChild(btn);
+        });
+      } else {
+        optionsContainer.classList.add('hidden');
+        spellContainer.classList.remove('hidden');
+
+        // 영어 단어를 보여주고 한국어 뜻을 쓰게 함
+        document.getElementById('targetWord').innerText = target.e;
+
+        // 초성 힌트: 첫 번째 뜻의 첫 음절 초성만 공개 (예: ㄷ○○○)
+        const hintEl = document.getElementById('spellHint');
+        hintEl.innerHTML = `<span class="hint-label">힌트</span>${buildSpellHint(target.k)}`;
+        hintEl.classList.remove('hidden');
+
+        spellInput.value = '';
+        spellInput.classList.remove('correct', 'wrong');
+        spellInput.disabled = false;
+        setTimeout(() => spellInput.focus(), 50);
+      }
+    }
+
+    function checkAnswer(selected, correct, btn) {
+      if (isAnswered) return;
+      isAnswered = true;
+
+      const target = quizPool[currentQuestionIdx];
+
+      if (selected === correct) {
+        correctCount++;
+        if (quizMode === 'normal' && quizPhase === 'mc') mcCorrect++;
+        btn.classList.add('correct');
+        document.getElementById('quizFeedback').innerText = "정답입니다! 훌륭해요! 👍";
+        clearWrongIfPresent(target);
+      } else {
+        btn.classList.add('wrong');
+        Array.from(document.getElementsByClassName('option-btn')).forEach(b => {
+          if (b.innerText === correct) b.classList.add('correct');
+        });
+        document.getElementById('quizFeedback').innerText = "아쉽네요! 복습해봅시다! ✍️";
+        recordWrong(target);
+      }
+      document.getElementById('nextQuestionBtn').classList.remove('hidden');
+    }
+
+    function submitSpelling() {
+      if (isAnswered) return;
+      isAnswered = true;
+
+      const target = quizPool[currentQuestionIdx];
+      const inputEl = document.getElementById('spellInput');
+      const val = inputEl.value;
+      const result = gradeKoreanMeaning(val, target); // 여러 뜻 중 하나 / 오타 1글자 / ~하다 생략 허용
+
+      inputEl.disabled = true;
+
+      if (result.ok) {
+        correctCount++;
+        if (quizMode === 'normal' && quizPhase === 'spell') spellCorrect++;
+        inputEl.classList.add('correct');
+        let msg;
+        if (result.matchType === 'exact') {
+          msg = "정답입니다! 훌륭해요! 👍";
+        } else {
+          msg = `정답으로 인정! (전체 뜻: ${target.k}) 👍`;
+        }
+        document.getElementById('quizFeedback').innerText = msg;
+        clearWrongIfPresent(target);
+      } else {
+        inputEl.classList.add('wrong');
+        document.getElementById('quizFeedback').innerText = `아쉽네요! 정답: ${target.k} ✍️`;
+        recordWrong(target);
+      }
+      document.getElementById('nextQuestionBtn').classList.remove('hidden');
+    }
+
+    function goNext() {
+      currentQuestionIdx++;
+      if (currentQuestionIdx < quizPool.length) {
+        showQuestion();
+        return;
+      }
+
+      if (quizMode === 'review') {
+        showReviewResult();
+        return;
+      }
+
+      // 일반 학습 모드: 객관식 전부 끝났으면 주관식 단계로, 주관식까지 끝났으면 결과로
+      if (quizPhase === 'mc') {
+        quizPhase = 'spell';
+        quizPool = shuffle(roundWords);
+        currentQuestionIdx = 0;
+        spellCorrect = 0; // 주관식 점수는 단계 시작 시점부터 집계
+        showQuestion();
+      } else {
+        // 주관식 커트라인(80점) 판정
+        const spellTotal = roundWords.length;
+        const spellScore = spellTotal > 0 ? Math.round((spellCorrect / spellTotal) * 100) : 0;
+
+        if (spellScore >= SPELL_CUTOFF) {
+          setSpellPass[currentSetIdx] = true;
+          saveToLocal();
+          showResult(spellScore);
+        } else {
+          setSpellPass[currentSetIdx] = false;
+          saveToLocal();
+          showSpellFailResult(spellScore);
+        }
+      }
+    }
+
+    // 주관식 80점 미달 시: 주관식 단계만 다시 풀기
+    function retrySpellPhase() {
+      quizMode = 'normal';
+      quizPhase = 'spell';
+      quizPool = shuffle(roundWords);
+      currentQuestionIdx = 0;
+      spellCorrect = 0;
+      isAnswered = false;
+      showOnly('quizView');
+      showQuestion();
+    }
+
+    function showSpellFailResult(spellScore) {
+      // 도전 기록은 남기되, 커트라인 미달이므로 세트는 클리어되지 않음
+      setAttempted[currentSetIdx] = true;
+      saveToLocal();
+      updateSetNav();
+
+      const nextBtn = document.getElementById('nextSetBtn');
+      nextBtn.classList.remove('hidden');
+      nextBtn.disabled = true;
+      nextBtn.style.opacity = '0.4';
+
+      const primaryBtn = document.getElementById('primaryResultBtn');
+      primaryBtn.innerText = '다시 학습';
+      primaryBtn.onclick = initStudy;
+
+      const resultHTML = `
+        <h2 style="margin:0 0 10px 0;">주관식 커트라인 미달 😢</h2>
+        <p style="margin:0; font-weight:900; font-size:20px; color:#ef4444;">
+          주관식 점수: ${spellScore}점 (통과 기준: ${SPELL_CUTOFF}점)
+        </p>
+        <p style="margin:6px 0 0 0; font-weight:800; color:#64748b;">
+          주관식(한국어 뜻 쓰기)에서 ${SPELL_CUTOFF}점 이상을 받아야 이 세트를 통과할 수 있어요.
+        </p>
+        <button class="main-btn" style="margin-top:16px; background:#dc2626;" onclick="retrySpellPhase()">주관식 다시 풀기</button>
+      `;
+      document.getElementById('resultContent').innerHTML = resultHTML;
+      showOnly('resultView');
+    }
+
+    function showResult(spellScore = null) {
+      // 이번 회차 점수 기록(표시용, 객관식+주관식 합산) + 도전 완료 표시
+      // 재시험이 있었더라도 '최종 객관식 점수 + 최종 주관식 점수'만 합산
+      const totalQuiz = totalRoundQuestions || quizPool.length;
+      const roundCorrect = mcCorrect + spellCorrect;
+      const wrongCountThisRound = totalQuiz - roundCorrect;
+
+      setWrongCounts[currentSetIdx] = wrongCountThisRound;
+      setAttempted[currentSetIdx] = true;
+      saveToLocal();
+      updateSetNav();
+
+      // 이 세트 범위(10개) 안에서 아직 안 풀린 오답이 있는지(객관식+주관식 통틀어) 확인
+      const pending = pendingWrongCountForSet(currentSetIdx);
+      const cleared = (pending === 0);
+
+      const nextBtn = document.getElementById('nextSetBtn');
+      nextBtn.classList.remove('hidden');
+      nextBtn.disabled = !cleared;
+      nextBtn.style.opacity = cleared ? '1' : '0.4';
+
+      const primaryBtn = document.getElementById('primaryResultBtn');
+      primaryBtn.innerText = '다시 학습';
+      primaryBtn.onclick = initStudy;
+
+      const resultHTML = `
+        <h2 style="margin:0 0 10px 0;">결과</h2>
+        <p style="margin:0; font-weight:900; font-size:18px;">이번 회차 점수: ${roundCorrect} / ${totalQuiz}</p>
+        ${spellScore !== null ? `<p style="margin:6px 0 0 0; font-weight:900; font-size:18px; color:var(--success);">주관식 점수: ${spellScore}점 (통과 ✅ / 기준 ${SPELL_CUTOFF}점)</p>` : ''}
+        <p style="margin:6px 0 0 0; font-weight:900; font-size:18px; color:${cleared ? 'var(--success)' : '#ef4444'};">
+          이 세트에 남은 오답: ${pending}개
+        </p>
+        <p style="margin:14px 0 0 0; color:#64748b; font-weight:800;">
+          주관식 ${SPELL_CUTOFF}점 이상 + 이 세트의 오답(객관식·주관식 모두)을 전부 해결해야 다음 세트로 넘어갈 수 있습니다.
+        </p>
+        ${pending > 0 ? `<button class="main-btn" style="margin-top:14px; background:#dc2626;" onclick="reviewThisSet()">이 세트 오답만 복습하기 (${pending})</button>` : ''}
+      `;
+      document.getElementById('resultContent').innerHTML = resultHTML;
+      showOnly('resultView');
+    }
+
+    function showReviewResult() {
+      const totalQuiz = quizPool.length;
+      const remainingTotal = Object.keys(wrongLog).length;
+      const remainingThisSet = (reviewFilterSetIdx !== null) ? pendingWrongCountForSet(reviewFilterSetIdx) : null;
+      const remaining = (reviewFilterSetIdx !== null) ? remainingThisSet : remainingTotal;
+
+      // 복습 중이던 세트가 currentSetIdx이고, 그 세트가 이제 완전 클리어됐다면 다음 세트 버튼 노출
+      const nextBtn = document.getElementById('nextSetBtn');
+      if (isSetCleared(currentSetIdx)) {
+        nextBtn.classList.remove('hidden');
+        nextBtn.disabled = false;
+        nextBtn.style.opacity = '1';
+      } else {
+        nextBtn.classList.add('hidden');
+      }
+
+      const primaryBtn = document.getElementById('primaryResultBtn');
+      if (remaining > 0) {
+        primaryBtn.innerText = '오답 다시 복습하기';
+        primaryBtn.onclick = () => openReviewQuiz(reviewFilterSetIdx);
+      } else {
+        primaryBtn.innerText = '학습으로 돌아가기';
+        primaryBtn.onclick = () => { quizMode = 'normal'; reviewFilterSetIdx = null; initStudy(); };
+      }
+
+      const titleSuffix = (reviewFilterSetIdx !== null) ? ` (Set ${reviewFilterSetIdx + 1} 한정)` : '';
+
+      const resultHTML = `
+        <h2 style="margin:0 0 10px 0;">오답노트 복습 결과${titleSuffix}</h2>
+        <p style="margin:0; font-weight:900; font-size:18px;">맞춘 개수: ${correctCount} / ${totalQuiz}</p>
+        <p style="margin:6px 0 0 0; font-weight:900; font-size:18px; color:${remaining===0 ? 'var(--success)' : '#ef4444'};">
+          남은 오답 단어: ${remaining}개
+        </p>
+        ${remaining === 0 ? '<p style="margin:14px 0 0 0; color:var(--success); font-weight:900;">오답을 모두 클리어했어요! 🎉</p>' : ''}
+      `;
+      document.getElementById('resultContent').innerHTML = resultHTML;
+      showOnly('resultView');
+    }
+
+    function moveToNextSet() {
+      if (!isSetCleared(currentSetIdx)) {
+        alert('주관식 80점 이상 + 이 세트의 오답(객관식·주관식 모두)을 전부 해결해야 다음 세트로 넘어갈 수 있어요.');
+        return;
+      }
+      const ts = totalSets();
+      if (currentSetIdx < ts - 1) currentSetIdx++;
+      saveToLocal();
+      initStudy();
+    }
+
+    // 초기 실행
+    initBookNav();
+    synonymMap = buildSynonymMap();
+    loadFromLocal();
+    // 저장 데이터가 있더라도 '연속 100점' 규칙을 우선 적용
+    const unlockedMaxInit = maxUnlockedSetIdx();
+    if (currentSetIdx > unlockedMaxInit) {
+      currentSetIdx = unlockedMaxInit;
+      saveToLocal();
+    }
+    updateReviewBtnLabel();
+    initStudy();
+  </script>
+  <!-- SkyAcademy Footer -->
+  <div id="skyFooter">산본skyacademy 01055524578</div>
+  <style>
+    #skyFooter{
+      position:fixed;
+      right:12px;
+      bottom:10px;
+      font-size:13px;
+      font-weight:900;
+      color:#334155;
+      background:rgba(255,255,255,0.9);
+      padding:6px 10px;
+      border-radius:10px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.08);
+      z-index:9999;
+      user-select:none;
+    }
+  </style>
+
+</body>
+</html>
