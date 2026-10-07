@@ -107,6 +107,7 @@
   <div id="studyView" class="container">
     <div>
       <h3 id="studyTitle">Set 1 학습 리스트</h3>
+      <div id="studyNotice" class="hidden" style="background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;border-radius:10px;padding:10px 12px;font-weight:800;margin:0 0 10px 0;"></div>
       <p style="font-size:13px; color:#64748b; margin:0 0 10px 0;">암기 후 [문제 시작하기]를 눌러주세요.</p>
       <div class="word-list" id="wordListContainer"></div>
     </div>
@@ -1929,9 +1930,11 @@
         if (setAttempted[i]) {
           if (isSetCleared(i)) {
             label += ` (완료✅)`;
+          } else if (!setSpellPass[i]) {
+            label += ` (주관식 80점 미달 – 다시 시험)`;
           } else {
             const pending = pendingWrongCountForSet(i);
-            label += pending > 0 ? ` (남은오답: ${pending})` : ` (완료✅)`;
+            label += ` (남은오답: ${pending})`;
           }
         }
 
@@ -1971,6 +1974,15 @@
       showOnly('studyView');
       updateSetNav();
       document.getElementById('studyTitle').innerText = `Set ${currentSetIdx + 1} 학습 리스트`;
+      const notice = document.getElementById('studyNotice');
+      if (setAttempted[currentSetIdx] && !isSetCleared(currentSetIdx)) {
+        notice.innerText = !setSpellPass[currentSetIdx]
+          ? `지난번 주관식이 ${SPELL_CUTOFF}점 미만이라 아직 통과 전이에요. 이 세트 시험을 다시 봐서 주관식 ${SPELL_CUTOFF}점 이상을 받으면 다음 세트가 열려요.`
+          : `이 세트에 남은 오답 ${pendingWrongCountForSet(currentSetIdx)}개를 오답노트 복습으로 해결하면 다음 세트가 열려요.`;
+        notice.classList.remove('hidden');
+      } else {
+        notice.classList.add('hidden');
+      }
       const container = document.getElementById('wordListContainer');
       container.innerHTML = '';
       const start = currentSetIdx * SET_SIZE;
